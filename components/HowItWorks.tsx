@@ -1,18 +1,18 @@
 const steps = [
   {
     number: "1",
-    title: "Etkinliğini tanımla",
-    text: "Organizasyon türünü, tarihini ve şehrini belirt.",
+    title: "Davetiyeni oluştur",
+    text: "İsimlerinizi, tarihi, saati, mekanı ekleyin ve bir şablon seçin.",
   },
   {
     number: "2",
-    title: "Hizmetleri karşılaştır",
-    text: "Mekan, fotoğrafçı ve diğer hizmet sağlayıcıları incele.",
+    title: "Misafirlerinle paylaş",
+    text: "Tek bir link gönderin, misafirler \"Katılıyorum\" ile dönüş yapsın.",
   },
   {
     number: "3",
-    title: "Teklif al, planla",
-    text: "Beğendiklerinle iletişime geç, teklif iste, planına ekle.",
+    title: "Anılar birikmeye başlar",
+    text: "Etkinlik sonrası fotoğraf, video ve mesajlarla anı sayfan oluşur.",
   },
 ];
 

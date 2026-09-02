@@ -8,13 +8,14 @@ export default function Hero() {
           birlikte tasarlayalım.
         </h1>
         <p>
-          Söz, nişan, kına, düğün ve özel davetlerin için doğru mekanı,
-          fotoğrafçıyı ve hizmet sağlayıcıyı tek yerden bul, karşılaştır,
-          teklif al.
+          Söz, nişan, kına ve düğünün için dijital davetiyeni oluştur,
+          misafirlerinle paylaş. Etkinlik bittiğinde davetiyen kapanmaz —
+          fotoğraflar, videolar ve mesajlarla dolan kalıcı bir anı sayfasına
+          dönüşür.
         </p>
         <div className="hero__actions">
-          <a href="#hizmetler" className="btn btn--primary">
-            Etkinliğini planla
+          <a href="#olustur" className="btn btn--primary">
+            Davetiyeni oluştur
           </a>
           <a href="#nasil-calisir" className="btn btn--ghost">
             Nasıl çalışır

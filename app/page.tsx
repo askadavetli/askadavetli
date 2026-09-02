@@ -1,6 +1,6 @@
 import Header from "../components/Header";
 import Hero from "../components/Hero";
-import Categories from "../components/Categories";
+import Features from "../components/Features";
 import HowItWorks from "../components/HowItWorks";
 import Vision from "../components/Vision";
 import CtaSplit from "../components/CtaSplit";
@@ -12,7 +12,7 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
-        <Categories />
+        <Features />
         <HowItWorks />
         <Vision />
         <CtaSplit />

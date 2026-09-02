@@ -1,24 +1,19 @@
 export default function CtaSplit() {
   return (
-    <section className="cta-split">
-      <div className="cta-split__panel cta-split__panel--filled">
-        <h3>Etkinliğini planlıyorsan</h3>
-        <p>Mekan ve hizmet sağlayıcıları keşfetmeye hemen başla.</p>
-        <a href="/kayit" className="btn btn--on-dark">
-          Ücretsiz hesap oluştur
-        </a>
-      </div>
+    <section className="cta-single">
+      <h3>Daveti göndermeye hazır mısın?</h3>
+      <p>Birkaç dakika içinde davetiyeni oluştur, misafirlerinle paylaş.</p>
+      <a href="/kayit" className="btn btn--primary">
+        Ücretsiz davetiye oluştur
+      </a>
 
-      <div className="cta-split__panel">
-        <h3>Bir işletmeysen</h3>
-        <p>
-          Mekanını veya hizmetini AşkaDavetli'de listelemek için bize
-          ulaş.
-        </p>
-        <a href="mailto:askadavetliapp@gmail.com" className="btn btn--ghost">
-          İşletmeni ekle
+      <p className="cta-single__note">
+        Bir mekan, fotoğrafçı veya organizasyon firmasıysan{" "}
+        <a href="mailto:askadavetliapp@gmail.com" className="text-link">
+          bize ulaş
         </a>
-      </div>
+        , yakında platforma dahil olacaksın.
+      </p>
     </section>
   );
 }
