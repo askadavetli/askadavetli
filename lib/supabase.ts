@@ -1,14 +1,19 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+function normalizeUrl(raw: string | undefined): string {
+  const value = (raw ?? "").trim();
+  if (!value) return "";
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+}
 
-// Yapılandırma eksikse tarayıcı konsoluna uyarı basıyoruz ama build'i
-// veya sunucu tarafı render'ı kırmıyoruz — Next.js prerender aşamasında
-// bu dosya import edildiğinde ortam değişkenleri her zaman mevcut olmayabilir.
+const supabaseUrl = normalizeUrl(process.env.NEXT_PUBLIC_SUPABASE_URL);
+const supabaseKey = (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "").trim();
+
+// Yapılandırma eksik/bozuksa tarayıcı konsoluna uyarı basıyoruz ama
+// build'i veya sunucu tarafı prerender'ı kırmıyoruz.
 if (typeof window !== "undefined" && (!supabaseUrl || !supabaseKey)) {
   console.error(
-    "Supabase ortam değişkenleri eksik: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+    "Supabase ortam değişkenleri eksik veya hatalı: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
   );
 }
 
