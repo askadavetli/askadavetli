@@ -6,14 +6,6 @@ export default function CtaSplit() {
       <a href="/kayit" className="btn btn--primary">
         Ücretsiz davetiye oluştur
       </a>
-
-      <p className="cta-single__note">
-        Bir mekan, fotoğrafçı veya organizasyon firmasıysan{" "}
-        <a href="mailto:askadavetliapp@gmail.com" className="text-link">
-          bize ulaş
-        </a>
-        , yakında platforma dahil olacaksın.
-      </p>
     </section>
   );
 }
