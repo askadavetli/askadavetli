@@ -15,10 +15,12 @@ create table if not exists profiles (
 
 alter table profiles enable row level security;
 
+drop policy if exists "Kullanıcı kendi profilini görebilir" on profiles;
 create policy "Kullanıcı kendi profilini görebilir"
   on profiles for select
   using (auth.uid() = id);
 
+drop policy if exists "Kullanıcı kendi profilini güncelleyebilir" on profiles;
 create policy "Kullanıcı kendi profilini güncelleyebilir"
   on profiles for update
   using (auth.uid() = id);
@@ -74,22 +76,27 @@ create index if not exists invitations_owner_id_idx on invitations (owner_id);
 
 alter table invitations enable row level security;
 
+drop policy if exists "Herkes yayınlanmış davetiyeyi görebilir" on invitations;
 create policy "Herkes yayınlanmış davetiyeyi görebilir"
   on invitations for select
   using (is_published = true);
 
+drop policy if exists "Sahip kendi davetiyesini her zaman görebilir" on invitations;
 create policy "Sahip kendi davetiyesini her zaman görebilir"
   on invitations for select
   using (auth.uid() = owner_id);
 
+drop policy if exists "Sahip kendi davetiyesini oluşturabilir" on invitations;
 create policy "Sahip kendi davetiyesini oluşturabilir"
   on invitations for insert
   with check (auth.uid() = owner_id);
 
+drop policy if exists "Sahip kendi davetiyesini güncelleyebilir" on invitations;
 create policy "Sahip kendi davetiyesini güncelleyebilir"
   on invitations for update
   using (auth.uid() = owner_id);
 
+drop policy if exists "Sahip kendi davetiyesini silebilir" on invitations;
 create policy "Sahip kendi davetiyesini silebilir"
   on invitations for delete
   using (auth.uid() = owner_id);
@@ -111,6 +118,7 @@ create index if not exists rsvps_invitation_id_idx on rsvps (invitation_id);
 
 alter table rsvps enable row level security;
 
+drop policy if exists "Yayınlanmış davetiyeye herkes RSVP gönderebilir" on rsvps;
 create policy "Yayınlanmış davetiyeye herkes RSVP gönderebilir"
   on rsvps for insert
   with check (
@@ -121,6 +129,7 @@ create policy "Yayınlanmış davetiyeye herkes RSVP gönderebilir"
     )
   );
 
+drop policy if exists "Sahip kendi davetiyesinin RSVP'lerini görebilir" on rsvps;
 create policy "Sahip kendi davetiyesinin RSVP'lerini görebilir"
   on rsvps for select
   using (
@@ -147,6 +156,7 @@ create index if not exists guestbook_messages_invitation_id_idx
 
 alter table guestbook_messages enable row level security;
 
+drop policy if exists "Yayınlanmış davetiyeye herkes mesaj bırakabilir" on guestbook_messages;
 create policy "Yayınlanmış davetiyeye herkes mesaj bırakabilir"
   on guestbook_messages for insert
   with check (
@@ -157,6 +167,7 @@ create policy "Yayınlanmış davetiyeye herkes mesaj bırakabilir"
     )
   );
 
+drop policy if exists "Yayınlanmış davetiyenin mesajlarını herkes görebilir" on guestbook_messages;
 create policy "Yayınlanmış davetiyenin mesajlarını herkes görebilir"
   on guestbook_messages for select
   using (
@@ -185,6 +196,7 @@ create index if not exists media_invitation_id_idx on media (invitation_id);
 
 alter table media enable row level security;
 
+drop policy if exists "Yayınlanmış davetiyeye herkes medya ekleyebilir" on media;
 create policy "Yayınlanmış davetiyeye herkes medya ekleyebilir"
   on media for insert
   with check (
@@ -195,6 +207,7 @@ create policy "Yayınlanmış davetiyeye herkes medya ekleyebilir"
     )
   );
 
+drop policy if exists "Yayınlanmış davetiyenin medyasını herkes görebilir" on media;
 create policy "Yayınlanmış davetiyenin medyasını herkes görebilir"
   on media for select
   using (
