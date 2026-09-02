@@ -3,6 +3,20 @@
 --
 -- Bu dosyayı Supabase Dashboard > SQL Editor içine yapıştırıp
 -- "Run" ile çalıştırın. Tek seferlik bir kurulumdur.
+--
+-- NOT: Proje henüz canlıya açılmadığı ve gerçek veri olmadığı için,
+-- bu script önce ilgili tabloları (varsa, hangi şekilde olursa olsun)
+-- güvenle siler, sonra sıfırdan ve tutarlı şekilde yeniden oluşturur.
+-- Böylece önceki yarım kalmış denemelerden kalan uyumsuz yapılar sorun
+-- çıkarmaz.
+
+drop table if exists media cascade;
+drop table if exists guestbook_messages cascade;
+drop table if exists rsvps cascade;
+drop table if exists invitations cascade;
+drop trigger if exists on_auth_user_created on auth.users;
+drop function if exists handle_new_user();
+drop table if exists profiles cascade;
 
 -- ---------------------------------------------------------------
 -- 1) profiles — auth.users ile birebir, kullanıcı adı/görünen ad için
