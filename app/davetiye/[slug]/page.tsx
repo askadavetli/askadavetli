@@ -15,6 +15,7 @@ type Invitation = {
   event_time: string | null;
   venue_name: string | null;
   venue_address: string | null;
+  music_url: string | null;
 };
 
 type GuestbookMessage = {
@@ -90,6 +91,9 @@ export default function DavetiyePage({
   const streamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+
   useEffect(() => {
     let active = true;
 
@@ -97,7 +101,7 @@ export default function DavetiyePage({
       const { data } = await supabase
         .from("invitations")
         .select(
-          "id, owner_id, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address"
+          "id, owner_id, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, music_url"
         )
         .eq("slug", slug)
         .eq("is_published", true)
@@ -393,6 +397,17 @@ export default function DavetiyePage({
     }
   }
 
+  function toggleMusic() {
+    if (!audioRef.current) return;
+
+    if (isMusicPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsMusicPlaying(!isMusicPlaying);
+  }
+
   async function deleteMedia(item: MediaItem) {
     const confirmed = window.confirm(
       "Bu fotoğraf/videoyu kalıcı olarak silmek istediğine emin misin?"
@@ -452,6 +467,15 @@ export default function DavetiyePage({
           {invitation.event_time && <span>{invitation.event_time.slice(0, 5)}</span>}
           {invitation.venue_name && <span>{invitation.venue_name}</span>}
         </div>
+
+        {invitation.music_url && (
+          <div className="music-player">
+            <audio ref={audioRef} src={invitation.music_url} loop />
+            <button type="button" onClick={toggleMusic} className="music-player__btn">
+              {isMusicPlaying ? "⏸ Şarkıyı durdur" : "🎵 Şarkımızı çal"}
+            </button>
+          </div>
+        )}
       </section>
 
       <nav className="quick-menu" aria-label="Hızlı erişim">

@@ -35,6 +35,9 @@ export default function DuzenlePage({
   const [venueName, setVenueName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
   const [isPublished, setIsPublished] = useState(true);
+  const [musicUrl, setMusicUrl] = useState<string | null>(null);
+  const [musicFile, setMusicFile] = useState<File | null>(null);
+  const [removeMusic, setRemoveMusic] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +58,7 @@ export default function DuzenlePage({
       const { data } = await supabase
         .from("invitations")
         .select(
-          "id, owner_id, slug, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, is_published"
+          "id, owner_id, slug, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, is_published, music_url"
         )
         .eq("id", id)
         .maybeSingle();
@@ -76,6 +79,7 @@ export default function DuzenlePage({
       setVenueName(data.venue_name ?? "");
       setVenueAddress(data.venue_address ?? "");
       setIsPublished(data.is_published);
+      setMusicUrl(data.music_url);
       setLoadingState("ready");
     }
 
@@ -90,6 +94,29 @@ export default function DuzenlePage({
     setError(null);
     setSaving(true);
 
+    let newMusicUrl = musicUrl;
+
+    if (removeMusic) {
+      newMusicUrl = null;
+    }
+
+    if (musicFile) {
+      const ext = musicFile.name.split(".").pop() ?? "mp3";
+      const path = `${id}/music/${Date.now()}.${ext}`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from("media")
+        .upload(path, musicFile);
+
+      if (uploadErr) {
+        setSaving(false);
+        setError(uploadErr.message);
+        return;
+      }
+
+      newMusicUrl = supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+    }
+
     const { error: updateError } = await supabase
       .from("invitations")
       .update({
@@ -101,6 +128,7 @@ export default function DuzenlePage({
         venue_name: venueName || null,
         venue_address: venueAddress || null,
         is_published: isPublished,
+        music_url: newMusicUrl,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);
@@ -223,6 +251,40 @@ export default function DuzenlePage({
           />
           Davetiye yayında (kapatırsan misafirler linke giremez)
         </label>
+
+        <label htmlFor="musicFile">
+          {musicUrl && !removeMusic ? "Müziği değiştir" : "Müzik ekle"}
+        </label>
+        {musicUrl && !removeMusic && (
+          <div className="music-current">
+            <audio src={musicUrl} controls />
+            <button
+              type="button"
+              className="text-link"
+              onClick={() => setRemoveMusic(true)}
+            >
+              Müziği kaldır
+            </button>
+          </div>
+        )}
+        {removeMusic && (
+          <p className="music-current__removed">
+            Kaydettiğinde müzik kaldırılacak.{" "}
+            <button
+              type="button"
+              className="text-link"
+              onClick={() => setRemoveMusic(false)}
+            >
+              Vazgeç
+            </button>
+          </p>
+        )}
+        <input
+          id="musicFile"
+          type="file"
+          accept="audio/*"
+          onChange={(e) => setMusicFile(e.target.files?.[0] ?? null)}
+        />
 
         {error && <p className="auth-form__error">{error}</p>}
 

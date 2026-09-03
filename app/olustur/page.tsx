@@ -26,6 +26,7 @@ export default function OlusturPage() {
   const [eventTime, setEventTime] = useState("");
   const [venueName, setVenueName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
+  const [musicFile, setMusicFile] = useState<File | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,26 +70,48 @@ export default function OlusturPage() {
     const baseSlug = slugify(`${partner1Name}-${partner2Name}`) || "davetiye";
     const slug = `${baseSlug}-${randomSuffix()}`;
 
-    const { error: insertError } = await supabase.from("invitations").insert({
-      owner_id: session.user.id,
-      slug,
-      partner1_name: partner1Name,
-      partner2_name: partner2Name,
-      event_type: eventType,
-      event_date: eventDate || null,
-      event_time: eventTime || null,
-      venue_name: venueName || null,
-      venue_address: venueAddress || null,
-      is_published: true,
-    });
+    const { data: inserted, error: insertError } = await supabase
+      .from("invitations")
+      .insert({
+        owner_id: session.user.id,
+        slug,
+        partner1_name: partner1Name,
+        partner2_name: partner2Name,
+        event_type: eventType,
+        event_date: eventDate || null,
+        event_time: eventTime || null,
+        venue_name: venueName || null,
+        venue_address: venueAddress || null,
+        is_published: true,
+      })
+      .select("id")
+      .single();
 
-    setLoading(false);
-
-    if (insertError) {
-      setError(insertError.message);
+    if (insertError || !inserted) {
+      setLoading(false);
+      setError(insertError?.message ?? "Davetiye oluşturulamadı.");
       return;
     }
 
+    if (musicFile) {
+      const ext = musicFile.name.split(".").pop() ?? "mp3";
+      const path = `${inserted.id}/music/${Date.now()}.${ext}`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from("media")
+        .upload(path, musicFile);
+
+      if (!uploadErr) {
+        const musicUrl = supabase.storage.from("media").getPublicUrl(path)
+          .data.publicUrl;
+        await supabase
+          .from("invitations")
+          .update({ music_url: musicUrl })
+          .eq("id", inserted.id);
+      }
+    }
+
+    setLoading(false);
     router.push(`/davetiye/${slug}`);
   }
 
@@ -184,6 +207,14 @@ export default function OlusturPage() {
           value={venueAddress}
           onChange={(e) => setVenueAddress(e.target.value)}
           placeholder="Misafirlerin haritada göreceği adres"
+        />
+
+        <label htmlFor="musicFile">Müzik ekle (opsiyonel)</label>
+        <input
+          id="musicFile"
+          type="file"
+          accept="audio/*"
+          onChange={(e) => setMusicFile(e.target.files?.[0] ?? null)}
         />
 
         {error && <p className="auth-form__error">{error}</p>}
