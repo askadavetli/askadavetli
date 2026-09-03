@@ -16,6 +16,7 @@ type Invitation = {
   venue_name: string | null;
   venue_address: string | null;
   music_url: string | null;
+  music_youtube_id: string | null;
 };
 
 type GuestbookMessage = {
@@ -93,6 +94,7 @@ export default function DavetiyePage({
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [showYoutubePlayer, setShowYoutubePlayer] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -101,7 +103,7 @@ export default function DavetiyePage({
       const { data } = await supabase
         .from("invitations")
         .select(
-          "id, owner_id, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, music_url"
+          "id, owner_id, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, music_url, music_youtube_id"
         )
         .eq("slug", slug)
         .eq("is_published", true)
@@ -468,13 +470,47 @@ export default function DavetiyePage({
           {invitation.venue_name && <span>{invitation.venue_name}</span>}
         </div>
 
-        {invitation.music_url && (
+        {invitation.music_youtube_id ? (
           <div className="music-player">
-            <audio ref={audioRef} src={invitation.music_url} loop />
-            <button type="button" onClick={toggleMusic} className="music-player__btn">
-              {isMusicPlaying ? "⏸ Şarkıyı durdur" : "🎵 Şarkımızı çal"}
-            </button>
+            {showYoutubePlayer ? (
+              <div className="music-player__youtube">
+                <iframe
+                  src={`https://www.youtube.com/embed/${invitation.music_youtube_id}?autoplay=1`}
+                  title="Şarkımız"
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowYoutubePlayer(false)}
+                  className="music-player__btn"
+                >
+                  ▪ Videoyu kapat
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowYoutubePlayer(true)}
+                className="music-player__btn"
+              >
+                🎵 Şarkımızı çal
+              </button>
+            )}
           </div>
+        ) : (
+          invitation.music_url && (
+            <div className="music-player">
+              <audio ref={audioRef} src={invitation.music_url} loop />
+              <button
+                type="button"
+                onClick={toggleMusic}
+                className="music-player__btn"
+              >
+                {isMusicPlaying ? "⏸ Şarkıyı durdur" : "🎵 Şarkımızı çal"}
+              </button>
+            </div>
+          )
         )}
       </section>
 

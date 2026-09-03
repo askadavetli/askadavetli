@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
+import { searchYoutubeMusic, type YoutubeSearchResult } from "../../../lib/youtube";
 
 const EVENT_TYPES = [
   { value: "soz", label: "Söz" },
@@ -38,6 +39,15 @@ export default function DuzenlePage({
   const [musicUrl, setMusicUrl] = useState<string | null>(null);
   const [musicFile, setMusicFile] = useState<File | null>(null);
   const [removeMusic, setRemoveMusic] = useState(false);
+  const [musicYoutubeId, setMusicYoutubeId] = useState<string | null>(null);
+  const [musicMode, setMusicMode] = useState<"upload" | "youtube">("upload");
+  const [youtubeQuery, setYoutubeQuery] = useState("");
+  const [youtubeResults, setYoutubeResults] = useState<YoutubeSearchResult[]>([]);
+  const [youtubeSearching, setYoutubeSearching] = useState(false);
+  const [youtubeError, setYoutubeError] = useState<string | null>(null);
+  const [selectedYoutube, setSelectedYoutube] = useState<YoutubeSearchResult | null>(
+    null
+  );
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +68,7 @@ export default function DuzenlePage({
       const { data } = await supabase
         .from("invitations")
         .select(
-          "id, owner_id, slug, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, is_published, music_url"
+          "id, owner_id, slug, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, is_published, music_url, music_youtube_id"
         )
         .eq("id", id)
         .maybeSingle();
@@ -80,6 +90,8 @@ export default function DuzenlePage({
       setVenueAddress(data.venue_address ?? "");
       setIsPublished(data.is_published);
       setMusicUrl(data.music_url);
+      setMusicYoutubeId(data.music_youtube_id);
+      if (data.music_youtube_id) setMusicMode("youtube");
       setLoadingState("ready");
     }
 
@@ -89,18 +101,40 @@ export default function DuzenlePage({
     };
   }, [id, router]);
 
+  async function handleYoutubeSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!youtubeQuery.trim()) return;
+
+    setYoutubeSearching(true);
+    setYoutubeError(null);
+
+    try {
+      const results = await searchYoutubeMusic(youtubeQuery.trim());
+      setYoutubeResults(results);
+    } catch (err) {
+      setYoutubeError(err instanceof Error ? err.message : "Arama başarısız oldu.");
+    } finally {
+      setYoutubeSearching(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSaving(true);
 
     let newMusicUrl = musicUrl;
+    let newMusicYoutubeId = musicYoutubeId;
 
     if (removeMusic) {
       newMusicUrl = null;
+      newMusicYoutubeId = null;
     }
 
-    if (musicFile) {
+    if (musicMode === "youtube" && selectedYoutube) {
+      newMusicYoutubeId = selectedYoutube.videoId;
+      newMusicUrl = null;
+    } else if (musicMode === "upload" && musicFile) {
       const ext = musicFile.name.split(".").pop() ?? "mp3";
       const path = `${id}/music/${Date.now()}.${ext}`;
 
@@ -115,6 +149,7 @@ export default function DuzenlePage({
       }
 
       newMusicUrl = supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+      newMusicYoutubeId = null;
     }
 
     const { error: updateError } = await supabase
@@ -129,6 +164,7 @@ export default function DuzenlePage({
         venue_address: venueAddress || null,
         is_published: isPublished,
         music_url: newMusicUrl,
+        music_youtube_id: newMusicYoutubeId,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);
@@ -252,10 +288,31 @@ export default function DuzenlePage({
           Davetiye yayında (kapatırsan misafirler linke giremez)
         </label>
 
-        <label htmlFor="musicFile">
-          {musicUrl && !removeMusic ? "Müziği değiştir" : "Müzik ekle"}
-        </label>
-        {musicUrl && !removeMusic && (
+        <label>Müzik (opsiyonel)</label>
+
+        {musicYoutubeId && !removeMusic && musicMode === "youtube" && !selectedYoutube && (
+          <div className="music-current">
+            <span>
+              Şu an bağlı: YouTube video (
+              <a
+                href={`https://www.youtube.com/watch?v=${musicYoutubeId}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                izle
+              </a>
+              )
+            </span>
+            <button
+              type="button"
+              className="text-link"
+              onClick={() => setRemoveMusic(true)}
+            >
+              Müziği kaldır
+            </button>
+          </div>
+        )}
+        {musicUrl && !removeMusic && musicMode === "upload" && !musicFile && (
           <div className="music-current">
             <audio src={musicUrl} controls />
             <button
@@ -279,12 +336,86 @@ export default function DuzenlePage({
             </button>
           </p>
         )}
-        <input
-          id="musicFile"
-          type="file"
-          accept="audio/*"
-          onChange={(e) => setMusicFile(e.target.files?.[0] ?? null)}
-        />
+
+        <div className="music-mode-toggle">
+          <button
+            type="button"
+            className={musicMode === "upload" ? "active" : ""}
+            onClick={() => {
+              setMusicMode("upload");
+              setRemoveMusic(false);
+            }}
+          >
+            Kendi dosyanı yükle
+          </button>
+          <button
+            type="button"
+            className={musicMode === "youtube" ? "active" : ""}
+            onClick={() => {
+              setMusicMode("youtube");
+              setRemoveMusic(false);
+            }}
+          >
+            YouTube&apos;dan seç
+          </button>
+        </div>
+
+        {musicMode === "upload" ? (
+          <input
+            id="musicFile"
+            type="file"
+            accept="audio/*"
+            onChange={(e) => setMusicFile(e.target.files?.[0] ?? null)}
+          />
+        ) : (
+          <div className="youtube-search">
+            <div className="youtube-search__bar">
+              <input
+                type="text"
+                value={youtubeQuery}
+                onChange={(e) => setYoutubeQuery(e.target.value)}
+                placeholder="Şarkı adı veya sanatçı ara"
+              />
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={handleYoutubeSearch}
+                disabled={youtubeSearching}
+              >
+                {youtubeSearching ? "Aranıyor..." : "Ara"}
+              </button>
+            </div>
+
+            {youtubeError && <p className="auth-form__error">{youtubeError}</p>}
+
+            {selectedYoutube && (
+              <p className="youtube-search__selected">
+                Seçildi: <strong>{selectedYoutube.title}</strong>
+              </p>
+            )}
+
+            {youtubeResults.length > 0 && (
+              <ul className="youtube-results">
+                {youtubeResults.map((r) => (
+                  <li
+                    key={r.videoId}
+                    className={
+                      selectedYoutube?.videoId === r.videoId ? "selected" : ""
+                    }
+                    onClick={() => setSelectedYoutube(r)}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={r.thumbnailUrl} alt="" />
+                    <div>
+                      <p>{r.title}</p>
+                      <span>{r.channelTitle}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         {error && <p className="auth-form__error">{error}</p>}
 

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { slugify, randomSuffix } from "../../lib/slugify";
+import { searchYoutubeMusic, type YoutubeSearchResult } from "../../lib/youtube";
 
 const EVENT_TYPES = [
   { value: "soz", label: "Söz" },
@@ -27,6 +28,14 @@ export default function OlusturPage() {
   const [venueName, setVenueName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
   const [musicFile, setMusicFile] = useState<File | null>(null);
+  const [musicMode, setMusicMode] = useState<"upload" | "youtube">("upload");
+  const [youtubeQuery, setYoutubeQuery] = useState("");
+  const [youtubeResults, setYoutubeResults] = useState<YoutubeSearchResult[]>([]);
+  const [youtubeSearching, setYoutubeSearching] = useState(false);
+  const [youtubeError, setYoutubeError] = useState<string | null>(null);
+  const [selectedYoutube, setSelectedYoutube] = useState<YoutubeSearchResult | null>(
+    null
+  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,6 +61,23 @@ export default function OlusturPage() {
       active = false;
     };
   }, [router]);
+
+  async function handleYoutubeSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (!youtubeQuery.trim()) return;
+
+    setYoutubeSearching(true);
+    setYoutubeError(null);
+
+    try {
+      const results = await searchYoutubeMusic(youtubeQuery.trim());
+      setYoutubeResults(results);
+    } catch (err) {
+      setYoutubeError(err instanceof Error ? err.message : "Arama başarısız oldu.");
+    } finally {
+      setYoutubeSearching(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -93,7 +119,12 @@ export default function OlusturPage() {
       return;
     }
 
-    if (musicFile) {
+    if (musicMode === "youtube" && selectedYoutube) {
+      await supabase
+        .from("invitations")
+        .update({ music_youtube_id: selectedYoutube.videoId })
+        .eq("id", inserted.id);
+    } else if (musicMode === "upload" && musicFile) {
       const ext = musicFile.name.split(".").pop() ?? "mp3";
       const path = `${inserted.id}/music/${Date.now()}.${ext}`;
 
@@ -209,13 +240,80 @@ export default function OlusturPage() {
           placeholder="Misafirlerin haritada göreceği adres"
         />
 
-        <label htmlFor="musicFile">Müzik ekle (opsiyonel)</label>
-        <input
-          id="musicFile"
-          type="file"
-          accept="audio/*"
-          onChange={(e) => setMusicFile(e.target.files?.[0] ?? null)}
-        />
+        <label htmlFor="musicFile">Müzik (opsiyonel)</label>
+        <div className="music-mode-toggle">
+          <button
+            type="button"
+            className={musicMode === "upload" ? "active" : ""}
+            onClick={() => setMusicMode("upload")}
+          >
+            Kendi dosyanı yükle
+          </button>
+          <button
+            type="button"
+            className={musicMode === "youtube" ? "active" : ""}
+            onClick={() => setMusicMode("youtube")}
+          >
+            YouTube&apos;dan seç
+          </button>
+        </div>
+
+        {musicMode === "upload" ? (
+          <input
+            id="musicFile"
+            type="file"
+            accept="audio/*"
+            onChange={(e) => setMusicFile(e.target.files?.[0] ?? null)}
+          />
+        ) : (
+          <div className="youtube-search">
+            <div className="youtube-search__bar">
+              <input
+                type="text"
+                value={youtubeQuery}
+                onChange={(e) => setYoutubeQuery(e.target.value)}
+                placeholder="Şarkı adı veya sanatçı ara"
+              />
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={handleYoutubeSearch}
+                disabled={youtubeSearching}
+              >
+                {youtubeSearching ? "Aranıyor..." : "Ara"}
+              </button>
+            </div>
+
+            {youtubeError && <p className="auth-form__error">{youtubeError}</p>}
+
+            {selectedYoutube && (
+              <p className="youtube-search__selected">
+                Seçildi: <strong>{selectedYoutube.title}</strong>
+              </p>
+            )}
+
+            {youtubeResults.length > 0 && (
+              <ul className="youtube-results">
+                {youtubeResults.map((r) => (
+                  <li
+                    key={r.videoId}
+                    className={
+                      selectedYoutube?.videoId === r.videoId ? "selected" : ""
+                    }
+                    onClick={() => setSelectedYoutube(r)}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={r.thumbnailUrl} alt="" />
+                    <div>
+                      <p>{r.title}</p>
+                      <span>{r.channelTitle}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         {error && <p className="auth-form__error">{error}</p>}
 
