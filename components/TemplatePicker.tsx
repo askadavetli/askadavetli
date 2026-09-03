@@ -4,10 +4,15 @@ import { useState } from "react";
 
 export type TemplateId = "klasik" | "midnight" | "royal-gold";
 
-const TEMPLATES: { id: TemplateId; name: string; premium: boolean }[] = [
-  { id: "klasik", name: "Klasik", premium: false },
-  { id: "midnight", name: "Midnight", premium: true },
-  { id: "royal-gold", name: "Royal Gold", premium: true },
+const TEMPLATES: { id: TemplateId; name: string; premium: boolean; thumb: string }[] = [
+  { id: "klasik", name: "Klasik", premium: false, thumb: "/templates/klasik-thumb.jpg" },
+  { id: "midnight", name: "Midnight", premium: true, thumb: "/templates/midnight-thumb.jpg" },
+  {
+    id: "royal-gold",
+    name: "Royal Gold",
+    premium: true,
+    thumb: "/templates/royal-gold-thumb.jpg",
+  },
 ];
 
 export default function TemplatePicker({
@@ -44,7 +49,10 @@ export default function TemplatePicker({
             }`}
             onClick={() => handleClick(t)}
           >
-            <span className={`template-swatch template-swatch--${t.id}`}>
+            <span
+              className={`template-swatch template-swatch--${t.id}`}
+              style={{ backgroundImage: `url(${t.thumb})` }}
+            >
               <span className="template-swatch__sample">A &amp; B</span>
               {t.premium && !isPremium && (
                 <span className="template-swatch__lock">🔒</span>

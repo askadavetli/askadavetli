@@ -1048,10 +1048,24 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
+  background-size: cover;
+  background-position: center;
   position: relative;
 }
 
+.template-swatch::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.38);
+}
+
 .template-swatch__sample {
+  position: relative;
+  z-index: 1;
+  color: white;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
   font-family: var(--font-display);
   font-size: 22px;
 }
@@ -1065,18 +1079,15 @@ a {
 
 .template-swatch--klasik {
   background: #f7f1e6;
-  color: #26201b;
   border: 1px solid #dccbb0;
 }
 
 .template-swatch--midnight {
   background: #1c1815;
-  color: #e9dcc4;
 }
 
 .template-swatch--royal-gold {
   background: linear-gradient(135deg, #2a1f13, #4a3418);
-  color: #f1dfae;
   border: 1px solid #b8934f;
 }
 
