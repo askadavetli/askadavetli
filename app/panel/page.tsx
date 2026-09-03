@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
+import QRCode from "qrcode";
 import { supabase } from "../../lib/supabase";
 
 type MediaPreview = {
@@ -30,6 +31,7 @@ export default function PanelPage() {
   const [user, setUser] = useState<User | null>(null);
   const [invitations, setInvitations] = useState<InvitationRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let active = true;
@@ -116,6 +118,21 @@ export default function PanelPage() {
     router.push("/");
   }
 
+  async function toggleQr(invId: string, slug: string) {
+    if (qrCodes[invId]) {
+      setQrCodes((prev) => {
+        const next = { ...prev };
+        delete next[invId];
+        return next;
+      });
+      return;
+    }
+
+    const url = `${window.location.origin}/davetiye/${slug}`;
+    const dataUrl = await QRCode.toDataURL(url, { width: 320, margin: 1 });
+    setQrCodes((prev) => ({ ...prev, [invId]: dataUrl }));
+  }
+
   if (loading) {
     return (
       <main className="panel-page">
@@ -159,6 +176,13 @@ export default function PanelPage() {
                 </div>
                 <div className="panel-list__meta">
                   <span>{inv.attendingGuestCount} kişi katılıyor</span>
+                  <button
+                    type="button"
+                    className="text-link panel-qr-toggle"
+                    onClick={() => toggleQr(inv.id, inv.slug)}
+                  >
+                    {qrCodes[inv.id] ? "QR kodu gizle" : "QR kodu göster"}
+                  </button>
                   <a href={`/duzenle/${inv.id}`} className="text-link">
                     Düzenle
                   </a>
@@ -167,6 +191,24 @@ export default function PanelPage() {
                   </a>
                 </div>
               </div>
+
+              {qrCodes[inv.id] && (
+                <div className="panel-qr">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={qrCodes[inv.id]} alt="Davetiye QR kodu" />
+                  <p>
+                    Masalara veya girişe koy — misafirler telefonla okutunca
+                    doğrudan katılım / fotoğraf / anı defteri menüsüne düşer.
+                  </p>
+                  <a
+                    href={qrCodes[inv.id]}
+                    download={`askadavetli-qr-${inv.slug}.png`}
+                    className="btn btn--ghost"
+                  >
+                    QR kodu indir
+                  </a>
+                </div>
+              )}
 
               {inv.mediaPreview.length > 0 && (
                 <div className="panel-media-preview">

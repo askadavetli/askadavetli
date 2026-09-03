@@ -454,6 +454,13 @@ export default function DavetiyePage({
         </div>
       </section>
 
+      <nav className="quick-menu" aria-label="Hızlı erişim">
+        <a href="#katilim">Katılım Bildir</a>
+        <a href="#medya">Fotoğraf / Video Ekle</a>
+        <a href="#sesli-mesaj">Sesli Mesaj</a>
+        <a href="#ani-defteri">Anı Defterine Yaz</a>
+      </nav>
+
       {mapQuery && (
         <section className="invitation-map">
           <iframe
@@ -473,7 +480,7 @@ export default function DavetiyePage({
         </section>
       )}
 
-      <section className="invitation-rsvp">
+      <section className="invitation-rsvp" id="katilim">
         {rsvpDone ? (
           <p className="invitation-rsvp__thanks">
             {rsvpStatus === "attending"
@@ -527,7 +534,7 @@ export default function DavetiyePage({
         )}
       </section>
 
-      <section className="invitation-media">
+      <section className="invitation-media" id="medya">
         <h2>Fotoğraflar &amp; videolar</h2>
         <p className="invitation-media__intro">
           Etkinlikten kareler ekle, bu sayfa yıllar sonra da anı albümünüz
@@ -573,7 +580,7 @@ export default function DavetiyePage({
         )}
       </section>
 
-      <section className="invitation-guestbook">
+      <section className="invitation-guestbook" id="ani-defteri">
         <h2>Anı defteri</h2>
         <p className="invitation-guestbook__intro">
           Bir mesaj bırak, çift yıllar sonra tekrar okusun.
@@ -609,7 +616,7 @@ export default function DavetiyePage({
           </button>
         </form>
 
-        <div className="voice-note">
+        <div className="voice-note" id="sesli-mesaj">
           <p className="voice-note__label">
             ya da 15 saniyelik sesli bir not bırak
           </p>
