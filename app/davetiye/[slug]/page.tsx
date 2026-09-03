@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 
 type Invitation = {
@@ -19,7 +19,8 @@ type Invitation = {
 type GuestbookMessage = {
   id: string;
   guest_name: string;
-  message: string;
+  message: string | null;
+  audio_path: string | null;
   created_at: string;
 };
 
@@ -77,6 +78,16 @@ export default function DavetiyePage({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  const RECORD_SECONDS = 15;
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordSecondsLeft, setRecordSecondsLeft] = useState(RECORD_SECONDS);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioSubmitting, setAudioSubmitting] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   useEffect(() => {
     let active = true;
 
@@ -99,7 +110,7 @@ export default function DavetiyePage({
 
         const { data: messageRows } = await supabase
           .from("guestbook_messages")
-          .select("id, guest_name, message, created_at")
+          .select("id, guest_name, message, audio_path, created_at")
           .eq("invitation_id", data.id)
           .order("created_at", { ascending: true });
 
@@ -176,7 +187,7 @@ export default function DavetiyePage({
         guest_name: guestName.trim(),
         message: messageText.trim(),
       })
-      .select("id, guest_name, message, created_at")
+      .select("id, guest_name, message, audio_path, created_at")
       .single();
 
     setMessageSubmitting(false);
@@ -254,6 +265,111 @@ export default function DavetiyePage({
       ).data.publicUrl;
       setMedia((prev) => [...prev, { ...mediaRow, publicUrl }]);
     }
+  }
+
+  async function startRecording() {
+    setAudioError(null);
+
+    if (!guestName.trim()) {
+      setAudioError("Kayda başlamadan önce adını yaz.");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      const chunks: BlobPart[] = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: "audio/webm" });
+        setAudioBlob(blob);
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      recorder.start();
+      setIsRecording(true);
+      setRecordSecondsLeft(RECORD_SECONDS);
+
+      timerRef.current = setInterval(() => {
+        setRecordSecondsLeft((prev) => {
+          if (prev <= 1) {
+            stopRecording();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch {
+      setAudioError("Mikrofon erişimi reddedildi ya da kullanılamıyor.");
+    }
+  }
+
+  function stopRecording() {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+  }
+
+  function discardRecording() {
+    setAudioBlob(null);
+    setRecordSecondsLeft(RECORD_SECONDS);
+  }
+
+  async function submitAudioMessage() {
+    if (!invitation || !audioBlob || !guestName.trim()) return;
+
+    setAudioSubmitting(true);
+    setAudioError(null);
+
+    const path = `${invitation.id}/audio/${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}.webm`;
+
+    const { error: uploadErr } = await supabase.storage
+      .from("media")
+      .upload(path, audioBlob);
+
+    if (uploadErr) {
+      setAudioSubmitting(false);
+      setAudioError(uploadErr.message);
+      return;
+    }
+
+    const { data, error: insertErr } = await supabase
+      .from("guestbook_messages")
+      .insert({
+        invitation_id: invitation.id,
+        guest_name: guestName.trim(),
+        message: null,
+        audio_path: path,
+      })
+      .select("id, guest_name, message, audio_path, created_at")
+      .single();
+
+    setAudioSubmitting(false);
+
+    if (insertErr) {
+      setAudioError(insertErr.message);
+      return;
+    }
+
+    if (data) {
+      setMessages((prev) => [...prev, data]);
+    }
+    setAudioBlob(null);
+    setRecordSecondsLeft(RECORD_SECONDS);
   }
 
   if (loading) {
@@ -439,11 +555,65 @@ export default function DavetiyePage({
           </button>
         </form>
 
+        <div className="voice-note">
+          <p className="voice-note__label">
+            ya da 15 saniyelik sesli bir not bırak
+          </p>
+
+          {audioError && <p className="auth-form__error">{audioError}</p>}
+
+          {!audioBlob ? (
+            <button
+              type="button"
+              className={`btn ${isRecording ? "btn--primary" : "btn--ghost"}`}
+              onClick={isRecording ? stopRecording : startRecording}
+            >
+              {isRecording
+                ? `Durdur (${recordSecondsLeft} sn)`
+                : "Sesli mesaj kaydet"}
+            </button>
+          ) : (
+            <div className="voice-note__preview">
+              <audio src={URL.createObjectURL(audioBlob)} controls />
+              <div className="voice-note__preview-actions">
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  disabled={audioSubmitting}
+                  onClick={submitAudioMessage}
+                >
+                  {audioSubmitting ? "Gönderiliyor..." : "Gönder"}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  disabled={audioSubmitting}
+                  onClick={discardRecording}
+                >
+                  Tekrar kaydet
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {messages.length > 0 && (
           <ul className="guestbook-list">
             {messages.map((msg) => (
               <li key={msg.id}>
-                <p className="guestbook-list__message">{msg.message}</p>
+                {msg.message && (
+                  <p className="guestbook-list__message">{msg.message}</p>
+                )}
+                {msg.audio_path && (
+                  <audio
+                    className="guestbook-list__audio"
+                    src={
+                      supabase.storage.from("media").getPublicUrl(msg.audio_path)
+                        .data.publicUrl
+                    }
+                    controls
+                  />
+                )}
                 <span className="guestbook-list__author">— {msg.guest_name}</span>
               </li>
             ))}
