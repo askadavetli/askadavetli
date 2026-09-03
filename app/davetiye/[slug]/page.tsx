@@ -23,6 +23,13 @@ type GuestbookMessage = {
   created_at: string;
 };
 
+type MediaItem = {
+  id: string;
+  storage_path: string;
+  media_type: "image" | "video";
+  publicUrl: string;
+};
+
 const EVENT_TYPE_LABELS: Record<string, string> = {
   soz: "Söz",
   nisan: "Nişan",
@@ -66,6 +73,10 @@ export default function DavetiyePage({
   const [messageSubmitting, setMessageSubmitting] = useState(false);
   const [messageError, setMessageError] = useState<string | null>(null);
 
+  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   useEffect(() => {
     let active = true;
 
@@ -94,6 +105,21 @@ export default function DavetiyePage({
 
         if (active && messageRows) {
           setMessages(messageRows);
+        }
+
+        const { data: mediaRows } = await supabase
+          .from("media")
+          .select("id, storage_path, media_type")
+          .eq("invitation_id", data.id)
+          .order("created_at", { ascending: true });
+
+        if (active && mediaRows) {
+          const withUrls = mediaRows.map((row) => ({
+            ...row,
+            publicUrl: supabase.storage.from("media").getPublicUrl(row.storage_path)
+              .data.publicUrl,
+          }));
+          setMedia(withUrls);
         }
       }
       setLoading(false);
@@ -164,6 +190,70 @@ export default function DavetiyePage({
       setMessages((prev) => [...prev, data]);
     }
     setMessageText("");
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+
+    if (!file || !invitation) return;
+
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+
+    if (!isImage && !isVideo) {
+      setUploadError("Sadece fotoğraf veya video yükleyebilirsin.");
+      return;
+    }
+
+    const maxSizeMb = isVideo ? 100 : 15;
+    if (file.size > maxSizeMb * 1024 * 1024) {
+      setUploadError(`Dosya çok büyük (maksimum ${maxSizeMb} MB).`);
+      return;
+    }
+
+    setUploading(true);
+    setUploadError(null);
+
+    const ext = file.name.split(".").pop() ?? "dat";
+    const path = `${invitation.id}/${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}.${ext}`;
+
+    const { error: uploadErr } = await supabase.storage
+      .from("media")
+      .upload(path, file);
+
+    if (uploadErr) {
+      setUploading(false);
+      setUploadError(uploadErr.message);
+      return;
+    }
+
+    const { data: mediaRow, error: insertErr } = await supabase
+      .from("media")
+      .insert({
+        invitation_id: invitation.id,
+        uploaded_by_name: guestName.trim() || null,
+        storage_path: path,
+        media_type: isVideo ? "video" : "image",
+      })
+      .select("id, storage_path, media_type")
+      .single();
+
+    setUploading(false);
+
+    if (insertErr) {
+      setUploadError(insertErr.message);
+      return;
+    }
+
+    if (mediaRow) {
+      const publicUrl = supabase.storage.from("media").getPublicUrl(
+        mediaRow.storage_path
+      ).data.publicUrl;
+      setMedia((prev) => [...prev, { ...mediaRow, publicUrl }]);
+    }
   }
 
   if (loading) {
@@ -275,6 +365,41 @@ export default function DavetiyePage({
               </button>
             </div>
           </>
+        )}
+      </section>
+
+      <section className="invitation-media">
+        <h2>Fotoğraflar &amp; videolar</h2>
+        <p className="invitation-media__intro">
+          Etkinlikten kareler ekle, bu sayfa yıllar sonra da anı albümünüz
+          olarak kalsın.
+        </p>
+
+        <label htmlFor="mediaUpload" className="btn btn--ghost media-upload-btn">
+          {uploading ? "Yükleniyor..." : "Fotoğraf / video ekle"}
+        </label>
+        <input
+          id="mediaUpload"
+          type="file"
+          accept="image/*,video/*"
+          onChange={handleFileUpload}
+          disabled={uploading}
+          hidden
+        />
+
+        {uploadError && <p className="auth-form__error">{uploadError}</p>}
+
+        {media.length > 0 && (
+          <div className="media-grid">
+            {media.map((item) =>
+              item.media_type === "video" ? (
+                <video key={item.id} src={item.publicUrl} controls />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={item.id} src={item.publicUrl} alt="" />
+              )
+            )}
+          </div>
         )}
       </section>
 
