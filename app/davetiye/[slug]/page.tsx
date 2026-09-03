@@ -16,6 +16,13 @@ type Invitation = {
   venue_address: string | null;
 };
 
+type GuestbookMessage = {
+  id: string;
+  guest_name: string;
+  message: string;
+  created_at: string;
+};
+
 const EVENT_TYPE_LABELS: Record<string, string> = {
   soz: "Söz",
   nisan: "Nişan",
@@ -54,6 +61,11 @@ export default function DavetiyePage({
   const [rsvpDone, setRsvpDone] = useState(false);
   const [rsvpError, setRsvpError] = useState<string | null>(null);
 
+  const [messages, setMessages] = useState<GuestbookMessage[]>([]);
+  const [messageText, setMessageText] = useState("");
+  const [messageSubmitting, setMessageSubmitting] = useState(false);
+  const [messageError, setMessageError] = useState<string | null>(null);
+
   useEffect(() => {
     let active = true;
 
@@ -73,6 +85,16 @@ export default function DavetiyePage({
         setNotFound(true);
       } else {
         setInvitation(data);
+
+        const { data: messageRows } = await supabase
+          .from("guestbook_messages")
+          .select("id, guest_name, message, created_at")
+          .eq("invitation_id", data.id)
+          .order("created_at", { ascending: true });
+
+        if (active && messageRows) {
+          setMessages(messageRows);
+        }
       }
       setLoading(false);
     }
@@ -108,6 +130,40 @@ export default function DavetiyePage({
     }
 
     setRsvpDone(true);
+  }
+
+  async function submitMessage(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!invitation || !guestName.trim() || !messageText.trim()) {
+      setMessageError("Lütfen adını ve mesajını yaz.");
+      return;
+    }
+
+    setMessageSubmitting(true);
+    setMessageError(null);
+
+    const { data, error } = await supabase
+      .from("guestbook_messages")
+      .insert({
+        invitation_id: invitation.id,
+        guest_name: guestName.trim(),
+        message: messageText.trim(),
+      })
+      .select("id, guest_name, message, created_at")
+      .single();
+
+    setMessageSubmitting(false);
+
+    if (error) {
+      setMessageError(error.message);
+      return;
+    }
+
+    if (data) {
+      setMessages((prev) => [...prev, data]);
+    }
+    setMessageText("");
   }
 
   if (loading) {
@@ -219,6 +275,54 @@ export default function DavetiyePage({
               </button>
             </div>
           </>
+        )}
+      </section>
+
+      <section className="invitation-guestbook">
+        <h2>Anı defteri</h2>
+        <p className="invitation-guestbook__intro">
+          Bir mesaj bırak, çift yıllar sonra tekrar okusun.
+        </p>
+
+        <form className="guestbook-form" onSubmit={submitMessage}>
+          <label htmlFor="guestNameMessage">Adın</label>
+          <input
+            id="guestNameMessage"
+            type="text"
+            value={guestName}
+            onChange={(e) => setGuestName(e.target.value)}
+            placeholder="Adın Soyadın"
+          />
+
+          <label htmlFor="messageText">Mesajın</label>
+          <textarea
+            id="messageText"
+            value={messageText}
+            onChange={(e) => setMessageText(e.target.value)}
+            placeholder="Sizlere en mutlu günlerinizi diliyorum..."
+            rows={3}
+          />
+
+          {messageError && <p className="auth-form__error">{messageError}</p>}
+
+          <button
+            type="submit"
+            className="btn btn--primary"
+            disabled={messageSubmitting}
+          >
+            {messageSubmitting ? "Gönderiliyor..." : "Mesaj bırak"}
+          </button>
+        </form>
+
+        {messages.length > 0 && (
+          <ul className="guestbook-list">
+            {messages.map((msg) => (
+              <li key={msg.id}>
+                <p className="guestbook-list__message">{msg.message}</p>
+                <span className="guestbook-list__author">— {msg.guest_name}</span>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
     </main>
