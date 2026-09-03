@@ -28,7 +28,8 @@ export default function Countdown({
   eventDate: string;
   eventTime: string | null;
 }) {
-  const target = new Date(`${eventDate}T${eventTime || "00:00"}:00`);
+  const timePart = (eventTime || "00:00").slice(0, 5);
+  const target = new Date(`${eventDate}T${timePart}:00`);
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
   const [mounted, setMounted] = useState(false);
 
