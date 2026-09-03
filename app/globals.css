@@ -637,13 +637,17 @@ a {
 }
 
 .panel-list li {
+  display: block;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.panel-list__row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 22px 0;
-  border-bottom: 1px solid var(--line);
 }
 
 .panel-list h3 {
@@ -665,6 +669,34 @@ a {
   gap: 20px;
   font-size: 14px;
   color: var(--ink-soft);
+}
+
+.panel-media-preview {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.panel-media-preview img,
+.panel-media-preview video {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--cream-deep);
+}
+
+.panel-media-preview__more {
+  width: 70px;
+  height: 70px;
+  border-radius: 4px;
+  background: var(--cream-deep);
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  text-decoration: none;
 }
 
 /* ---------- create invitation page ---------- */

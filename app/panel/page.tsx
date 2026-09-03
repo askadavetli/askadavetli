@@ -7,6 +7,12 @@ import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "../../lib/supabase";
 
+type MediaPreview = {
+  id: string;
+  media_type: "image" | "video";
+  publicUrl: string;
+};
+
 type InvitationRow = {
   id: string;
   slug: string;
@@ -15,6 +21,8 @@ type InvitationRow = {
   event_date: string | null;
   is_published: boolean;
   attendingGuestCount: number;
+  mediaCount: number;
+  mediaPreview: MediaPreview[];
 };
 
 export default function PanelPage() {
@@ -63,7 +71,31 @@ export default function PanelPage() {
             0
           );
 
-          return { ...inv, attendingGuestCount };
+          const { count: mediaCount } = await supabase
+            .from("media")
+            .select("id", { count: "exact", head: true })
+            .eq("invitation_id", inv.id);
+
+          const { data: mediaRows } = await supabase
+            .from("media")
+            .select("id, storage_path, media_type")
+            .eq("invitation_id", inv.id)
+            .order("created_at", { ascending: false })
+            .limit(4);
+
+          const mediaPreview: MediaPreview[] = (mediaRows ?? []).map((row) => ({
+            id: row.id,
+            media_type: row.media_type,
+            publicUrl: supabase.storage.from("media").getPublicUrl(row.storage_path)
+              .data.publicUrl,
+          }));
+
+          return {
+            ...inv,
+            attendingGuestCount,
+            mediaCount: mediaCount ?? 0,
+            mediaPreview,
+          };
         })
       );
 
@@ -115,21 +147,44 @@ export default function PanelPage() {
         <ul className="panel-list">
           {invitations.map((inv) => (
             <li key={inv.id}>
-              <div>
-                <h3>
-                  {inv.partner1_name} & {inv.partner2_name}
-                </h3>
-                <p>
-                  {inv.event_date ?? "Tarih henüz eklenmedi"} ·{" "}
-                  {inv.is_published ? "Yayında" : "Taslak"}
-                </p>
+              <div className="panel-list__row">
+                <div>
+                  <h3>
+                    {inv.partner1_name} & {inv.partner2_name}
+                  </h3>
+                  <p>
+                    {inv.event_date ?? "Tarih henüz eklenmedi"} ·{" "}
+                    {inv.is_published ? "Yayında" : "Taslak"}
+                  </p>
+                </div>
+                <div className="panel-list__meta">
+                  <span>{inv.attendingGuestCount} kişi katılıyor</span>
+                  <a href={`/davetiye/${inv.slug}`} className="text-link">
+                    Görüntüle
+                  </a>
+                </div>
               </div>
-              <div className="panel-list__meta">
-                <span>{inv.attendingGuestCount} kişi katılıyor</span>
-                <a href={`/davetiye/${inv.slug}`} className="text-link">
-                  Görüntüle
-                </a>
-              </div>
+
+              {inv.mediaPreview.length > 0 && (
+                <div className="panel-media-preview">
+                  {inv.mediaPreview.map((item) =>
+                    item.media_type === "video" ? (
+                      <video key={item.id} src={item.publicUrl} muted />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={item.id} src={item.publicUrl} alt="" />
+                    )
+                  )}
+                  {inv.mediaCount > inv.mediaPreview.length && (
+                    <a
+                      href={`/davetiye/${inv.slug}`}
+                      className="panel-media-preview__more"
+                    >
+                      +{inv.mediaCount - inv.mediaPreview.length}
+                    </a>
+                  )}
+                </div>
+              )}
             </li>
           ))}
         </ul>
