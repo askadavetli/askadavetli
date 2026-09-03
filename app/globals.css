@@ -30,11 +30,9 @@
   --line: #4a3820;
 }
 
-.theme-midnight h1,
 .theme-midnight h2,
 .theme-midnight h3,
 .theme-midnight h4,
-.theme-royal-gold h1,
 .theme-royal-gold h2,
 .theme-royal-gold h3,
 .theme-royal-gold h4 {
@@ -42,6 +40,15 @@
   text-shadow:
     0 2px 14px rgba(0, 0, 0, 0.85),
     0 0 3px rgba(0, 0, 0, 0.9);
+}
+
+.theme-midnight .invitation-hero h1,
+.theme-royal-gold .invitation-hero h1 {
+  font-weight: 600;
+  color: var(--brass);
+  text-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.9),
+    0 0 26px rgba(0, 0, 0, 0.55);
 }
 
 .invitation-theme-wrapper {
@@ -1418,18 +1425,22 @@ a {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 10px;
+  gap: 14px;
+  margin-top: 36px;
   margin-bottom: 50px;
 }
 
 .quick-menu a {
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 10px 18px;
+  padding: 13px 22px;
   font-size: 14px;
   text-decoration: none;
   color: var(--ink);
   background: var(--cream-deep);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
 }
 
 .quick-menu a:hover {

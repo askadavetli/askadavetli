@@ -495,7 +495,7 @@ export default function DavetiyePage({
       style={
         invitation.template === "midnight" || invitation.template === "royal-gold"
           ? {
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.62), rgba(0,0,0,0.62)), url(${getBackgroundPath(
+              backgroundImage: `radial-gradient(ellipse at center, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0.4) 100%), url(${getBackgroundPath(
                 invitation.template,
                 invitation.background_image
               )})`,
