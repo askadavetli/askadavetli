@@ -5,6 +5,7 @@ export const dynamic = "force-dynamic";
 import { use, useEffect, useRef, useState } from "react";
 import { supabase } from "../../../lib/supabase";
 import Countdown from "../../../components/Countdown";
+import { getBackgroundPath } from "../../../components/BackgroundPicker";
 
 type Invitation = {
   id: string;
@@ -20,6 +21,7 @@ type Invitation = {
   music_youtube_id: string | null;
   is_premium: boolean;
   template: string;
+  background_image: string | null;
 };
 
 type GuestbookMessage = {
@@ -112,7 +114,7 @@ export default function DavetiyePage({
       const { data } = await supabase
         .from("invitations")
         .select(
-          "id, owner_id, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, music_url, music_youtube_id, is_premium, template"
+          "id, owner_id, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, music_url, music_youtube_id, is_premium, template, background_image"
         )
         .eq("slug", slug)
         .eq("is_published", true)
@@ -488,7 +490,22 @@ export default function DavetiyePage({
   const mapQuery = invitation.venue_address || invitation.venue_name;
 
   return (
-    <div className={`invitation-theme-wrapper theme-${invitation.template}`}>
+    <div
+      className={`invitation-theme-wrapper theme-${invitation.template}`}
+      style={
+        invitation.template === "midnight" || invitation.template === "royal-gold"
+          ? {
+              backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url(${getBackgroundPath(
+                invitation.template,
+                invitation.background_image
+              )})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundAttachment: "fixed",
+            }
+          : undefined
+      }
+    >
     <main className="invitation-page">
       <section className="invitation-hero">
         <span className="invitation-hero__label">

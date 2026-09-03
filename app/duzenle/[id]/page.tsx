@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { searchYoutubeMusic, type YoutubeSearchResult } from "../../../lib/youtube";
 import TemplatePicker, { type TemplateId } from "../../../components/TemplatePicker";
+import BackgroundPicker from "../../../components/BackgroundPicker";
 
 const EVENT_TYPES = [
   { value: "soz", label: "Söz" },
@@ -39,6 +40,7 @@ export default function DuzenlePage({
   const [isPublished, setIsPublished] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
   const [template, setTemplate] = useState<TemplateId>("klasik");
+  const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
   const [musicUrl, setMusicUrl] = useState<string | null>(null);
   const [musicFile, setMusicFile] = useState<File | null>(null);
   const [removeMusic, setRemoveMusic] = useState(false);
@@ -71,7 +73,7 @@ export default function DuzenlePage({
       const { data } = await supabase
         .from("invitations")
         .select(
-          "id, owner_id, slug, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, is_published, is_premium, music_url, music_youtube_id, template"
+          "id, owner_id, slug, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, is_published, is_premium, music_url, music_youtube_id, template, background_image"
         )
         .eq("id", id)
         .maybeSingle();
@@ -94,6 +96,7 @@ export default function DuzenlePage({
       setIsPublished(data.is_published);
       setIsPremium(data.is_premium);
       setTemplate((data.template as TemplateId) || "klasik");
+      setBackgroundImage(data.background_image);
       setMusicUrl(data.music_url);
       setMusicYoutubeId(data.music_youtube_id);
       if (data.music_youtube_id) setMusicMode("youtube");
@@ -169,6 +172,7 @@ export default function DuzenlePage({
         venue_address: venueAddress || null,
         is_published: isPublished,
         template,
+        background_image: backgroundImage,
         music_url: newMusicUrl,
         music_youtube_id: newMusicYoutubeId,
         updated_at: new Date().toISOString(),
@@ -212,6 +216,14 @@ export default function DuzenlePage({
       <form className="create-form" onSubmit={handleSubmit}>
         <label>Şablon</label>
         <TemplatePicker value={template} onChange={setTemplate} isPremium={isPremium} />
+
+        {isPremium && (template === "midnight" || template === "royal-gold") && (
+          <BackgroundPicker
+            template={template}
+            value={backgroundImage}
+            onChange={setBackgroundImage}
+          />
+        )}
 
         <div className="create-form__row">
           <div>

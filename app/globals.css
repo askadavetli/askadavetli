@@ -1154,6 +1154,52 @@ a {
   margin: 0;
 }
 
+/* ---------- background picker ---------- */
+
+.bg-picker {
+  margin-bottom: 24px;
+}
+
+.bg-picker__label {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.bg-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.bg-picker__item {
+  height: 70px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 0;
+}
+
+.bg-picker__item--selected {
+  border-color: var(--ink);
+}
+
+.bg-picker__item span {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 0 0 4px 4px;
+  text-align: center;
+}
+
 /* ---------- music mode toggle & youtube search ---------- */
 
 .music-mode-toggle {
