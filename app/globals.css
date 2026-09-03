@@ -935,6 +935,26 @@ a {
   color: var(--ink-soft);
 }
 
+.guestbook-list__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.guestbook-list__delete {
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.guestbook-list__delete:hover {
+  color: #a33b2f;
+}
+
 .guestbook-list__audio {
   display: block;
   width: 100%;

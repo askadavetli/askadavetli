@@ -7,6 +7,7 @@ import { supabase } from "../../../lib/supabase";
 
 type Invitation = {
   id: string;
+  owner_id: string;
   partner1_name: string;
   partner2_name: string;
   event_type: string;
@@ -77,6 +78,7 @@ export default function DavetiyePage({
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
 
   const RECORD_SECONDS = 15;
   const [isRecording, setIsRecording] = useState(false);
@@ -95,7 +97,7 @@ export default function DavetiyePage({
       const { data } = await supabase
         .from("invitations")
         .select(
-          "id, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address"
+          "id, owner_id, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address"
         )
         .eq("slug", slug)
         .eq("is_published", true)
@@ -107,6 +109,14 @@ export default function DavetiyePage({
         setNotFound(true);
       } else {
         setInvitation(data);
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (active && session && session.user.id === data.owner_id) {
+          setIsOwner(true);
+        }
 
         const { data: messageRows } = await supabase
           .from("guestbook_messages")
@@ -372,6 +382,17 @@ export default function DavetiyePage({
     setRecordSecondsLeft(RECORD_SECONDS);
   }
 
+  async function deleteMessage(id: string) {
+    const confirmed = window.confirm("Bu mesajı silmek istediğine emin misin?");
+    if (!confirmed) return;
+
+    const { error } = await supabase.from("guestbook_messages").delete().eq("id", id);
+
+    if (!error) {
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+    }
+  }
+
   if (loading) {
     return (
       <main className="invitation-page">
@@ -614,7 +635,20 @@ export default function DavetiyePage({
                     controls
                   />
                 )}
-                <span className="guestbook-list__author">— {msg.guest_name}</span>
+                <div className="guestbook-list__footer">
+                  <span className="guestbook-list__author">
+                    — {msg.guest_name}
+                  </span>
+                  {isOwner && (
+                    <button
+                      type="button"
+                      className="guestbook-list__delete"
+                      onClick={() => deleteMessage(msg.id)}
+                    >
+                      Sil
+                    </button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
