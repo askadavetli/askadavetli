@@ -10,6 +10,31 @@
   --font-body: sans-serif;
 }
 
+/* ---------- invitation guest-page themes ---------- */
+
+.theme-midnight {
+  --cream: #17130f;
+  --cream-deep: #221c17;
+  --ink: #f1e6d3;
+  --ink-soft: #c9b89a;
+  --brass: #d9b262;
+  --line: #3a2f24;
+}
+
+.theme-royal-gold {
+  --cream: #1f160d;
+  --cream-deep: #2c2013;
+  --ink: #f3e6c8;
+  --ink-soft: #cbb98a;
+  --brass: #e0b25c;
+  --line: #4a3820;
+}
+
+.invitation-theme-wrapper {
+  background: var(--cream);
+  min-height: 100vh;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1324,7 +1349,7 @@ a {
   font-size: 14px;
   text-decoration: none;
   color: var(--ink);
-  background: white;
+  background: var(--cream-deep);
 }
 
 .quick-menu a:hover {

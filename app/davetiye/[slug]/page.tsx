@@ -19,6 +19,7 @@ type Invitation = {
   music_url: string | null;
   music_youtube_id: string | null;
   is_premium: boolean;
+  template: string;
 };
 
 type GuestbookMessage = {
@@ -111,7 +112,7 @@ export default function DavetiyePage({
       const { data } = await supabase
         .from("invitations")
         .select(
-          "id, owner_id, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, music_url, music_youtube_id, is_premium"
+          "id, owner_id, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, music_url, music_youtube_id, is_premium, template"
         )
         .eq("slug", slug)
         .eq("is_published", true)
@@ -464,18 +465,22 @@ export default function DavetiyePage({
 
   if (loading) {
     return (
-      <main className="invitation-page">
-        <p>Yükleniyor...</p>
-      </main>
+      <div className="invitation-theme-wrapper">
+        <main className="invitation-page">
+          <p>Yükleniyor...</p>
+        </main>
+      </div>
     );
   }
 
   if (notFound || !invitation) {
     return (
-      <main className="invitation-page invitation-page--empty">
-        <h1>Davetiye bulunamadı</h1>
-        <p>Bu bağlantı geçersiz olabilir ya da davetiye kaldırılmış olabilir.</p>
-      </main>
+      <div className="invitation-theme-wrapper">
+        <main className="invitation-page invitation-page--empty">
+          <h1>Davetiye bulunamadı</h1>
+          <p>Bu bağlantı geçersiz olabilir ya da davetiye kaldırılmış olabilir.</p>
+        </main>
+      </div>
     );
   }
 
@@ -483,6 +488,7 @@ export default function DavetiyePage({
   const mapQuery = invitation.venue_address || invitation.venue_name;
 
   return (
+    <div className={`invitation-theme-wrapper theme-${invitation.template}`}>
     <main className="invitation-page">
       <section className="invitation-hero">
         <span className="invitation-hero__label">
@@ -857,5 +863,6 @@ export default function DavetiyePage({
         )}
       </section>
     </main>
+    </div>
   );
 }
