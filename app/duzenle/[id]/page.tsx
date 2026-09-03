@@ -6,6 +6,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
 import { searchYoutubeMusic, type YoutubeSearchResult } from "../../../lib/youtube";
+import TemplatePicker, { type TemplateId } from "../../../components/TemplatePicker";
 
 const EVENT_TYPES = [
   { value: "soz", label: "Söz" },
@@ -36,6 +37,7 @@ export default function DuzenlePage({
   const [venueName, setVenueName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
   const [isPublished, setIsPublished] = useState(true);
+  const [template, setTemplate] = useState<TemplateId>("klasik");
   const [musicUrl, setMusicUrl] = useState<string | null>(null);
   const [musicFile, setMusicFile] = useState<File | null>(null);
   const [removeMusic, setRemoveMusic] = useState(false);
@@ -68,7 +70,7 @@ export default function DuzenlePage({
       const { data } = await supabase
         .from("invitations")
         .select(
-          "id, owner_id, slug, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, is_published, music_url, music_youtube_id"
+          "id, owner_id, slug, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, is_published, music_url, music_youtube_id, template"
         )
         .eq("id", id)
         .maybeSingle();
@@ -89,6 +91,7 @@ export default function DuzenlePage({
       setVenueName(data.venue_name ?? "");
       setVenueAddress(data.venue_address ?? "");
       setIsPublished(data.is_published);
+      setTemplate((data.template as TemplateId) || "klasik");
       setMusicUrl(data.music_url);
       setMusicYoutubeId(data.music_youtube_id);
       if (data.music_youtube_id) setMusicMode("youtube");
@@ -163,6 +166,7 @@ export default function DuzenlePage({
         venue_name: venueName || null,
         venue_address: venueAddress || null,
         is_published: isPublished,
+        template,
         music_url: newMusicUrl,
         music_youtube_id: newMusicYoutubeId,
         updated_at: new Date().toISOString(),
@@ -204,6 +208,9 @@ export default function DuzenlePage({
       </div>
 
       <form className="create-form" onSubmit={handleSubmit}>
+        <label>Şablon</label>
+        <TemplatePicker value={template} onChange={setTemplate} />
+
         <div className="create-form__row">
           <div>
             <label htmlFor="partner1">İlk isim</label>

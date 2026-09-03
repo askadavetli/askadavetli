@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { slugify, randomSuffix } from "../../lib/slugify";
 import { searchYoutubeMusic, type YoutubeSearchResult } from "../../lib/youtube";
+import TemplatePicker, { type TemplateId } from "../../components/TemplatePicker";
 
 const EVENT_TYPES = [
   { value: "soz", label: "Söz" },
@@ -27,6 +28,7 @@ export default function OlusturPage() {
   const [eventTime, setEventTime] = useState("");
   const [venueName, setVenueName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
+  const [template, setTemplate] = useState<TemplateId>("klasik");
   const [musicFile, setMusicFile] = useState<File | null>(null);
   const [musicMode, setMusicMode] = useState<"upload" | "youtube">("upload");
   const [youtubeQuery, setYoutubeQuery] = useState("");
@@ -108,6 +110,7 @@ export default function OlusturPage() {
         event_time: eventTime || null,
         venue_name: venueName || null,
         venue_address: venueAddress || null,
+        template,
         is_published: true,
       })
       .select("id")
@@ -165,6 +168,9 @@ export default function OlusturPage() {
       </div>
 
       <form className="create-form" onSubmit={handleSubmit}>
+        <label>Şablon seç</label>
+        <TemplatePicker value={template} onChange={setTemplate} />
+
         <div className="create-form__row">
           <div>
             <label htmlFor="partner1">İlk isim</label>

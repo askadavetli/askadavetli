@@ -969,6 +969,99 @@ a {
   margin: 0 0 16px;
 }
 
+/* ---------- template picker ---------- */
+
+.template-picker {
+  margin-bottom: 24px;
+}
+
+.template-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.template-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+}
+
+.template-card--selected {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+
+.template-card--locked {
+  opacity: 0.9;
+}
+
+.template-swatch {
+  width: 100%;
+  height: 74px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.template-swatch__sample {
+  font-family: var(--font-display);
+  font-size: 22px;
+}
+
+.template-swatch__lock {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 12px;
+}
+
+.template-swatch--klasik {
+  background: #f7f1e6;
+  color: #26201b;
+  border: 1px solid #dccbb0;
+}
+
+.template-swatch--midnight {
+  background: #1c1815;
+  color: #e9dcc4;
+}
+
+.template-swatch--royal-gold {
+  background: linear-gradient(135deg, #2a1f13, #4a3418);
+  color: #f1dfae;
+  border: 1px solid #b8934f;
+}
+
+.template-card__name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.template-card__tag {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.template-card__tag--premium {
+  color: var(--brass);
+}
+
+.template-picker__notice {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--brass);
+}
+
 /* ---------- music mode toggle & youtube search ---------- */
 
 .music-mode-toggle {
