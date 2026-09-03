@@ -15,7 +15,7 @@
 .theme-midnight {
   --cream: #17130f;
   --cream-deep: #221c17;
-  --ink: #f1e6d3;
+  --ink: #f8efdd;
   --ink-soft: #c9b89a;
   --brass: #d9b262;
   --line: #3a2f24;
@@ -24,10 +24,21 @@
 .theme-royal-gold {
   --cream: #1f160d;
   --cream-deep: #2c2013;
-  --ink: #f3e6c8;
+  --ink: #f9eecc;
   --ink-soft: #cbb98a;
   --brass: #e0b25c;
   --line: #4a3820;
+}
+
+.theme-midnight h1,
+.theme-midnight h2,
+.theme-midnight h3,
+.theme-midnight h4,
+.theme-royal-gold h1,
+.theme-royal-gold h2,
+.theme-royal-gold h3,
+.theme-royal-gold h4 {
+  font-weight: 600;
 }
 
 .invitation-theme-wrapper {
