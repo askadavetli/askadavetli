@@ -38,8 +38,8 @@
 .theme-royal-gold h4 {
   font-weight: 600;
   text-shadow:
-    0 2px 14px rgba(0, 0, 0, 0.85),
-    0 0 3px rgba(0, 0, 0, 0.9);
+    0 2px 8px rgba(0, 0, 0, 0.9),
+    0 0 20px rgba(0, 0, 0, 0.5);
 }
 
 .theme-midnight .invitation-hero h1,
