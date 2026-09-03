@@ -159,6 +159,9 @@ export default function PanelPage() {
                 </div>
                 <div className="panel-list__meta">
                   <span>{inv.attendingGuestCount} kişi katılıyor</span>
+                  <a href={`/duzenle/${inv.id}`} className="text-link">
+                    Düzenle
+                  </a>
                   <a href={`/davetiye/${inv.slug}`} className="text-link">
                     Görüntüle
                   </a>
