@@ -26,7 +26,7 @@ export default function GirisPage() {
     setLoading(false);
 
     if (signInError) {
-      setError("E-posta veya şifre hatalı.");
+      setError(signInError.message);
       return;
     }
 
