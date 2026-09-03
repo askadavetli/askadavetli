@@ -17,6 +17,7 @@ type Invitation = {
   venue_address: string | null;
   music_url: string | null;
   music_youtube_id: string | null;
+  is_premium: boolean;
 };
 
 type GuestbookMessage = {
@@ -42,6 +43,9 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
   dugun: "Düğün",
   diger: "Davet",
 };
+
+const FREE_MEDIA_LIMIT = 10;
+const FREE_GUESTBOOK_LIMIT = 20;
 
 function formatDate(dateStr: string | null): string | null {
   if (!dateStr) return null;
@@ -105,7 +109,7 @@ export default function DavetiyePage({
       const { data } = await supabase
         .from("invitations")
         .select(
-          "id, owner_id, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, music_url, music_youtube_id"
+          "id, owner_id, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, music_url, music_youtube_id, is_premium"
         )
         .eq("slug", slug)
         .eq("is_published", true)
@@ -195,6 +199,13 @@ export default function DavetiyePage({
       return;
     }
 
+    if (!invitation.is_premium && messages.length >= FREE_GUESTBOOK_LIMIT) {
+      setMessageError(
+        `Ücretsiz davetiyede en fazla ${FREE_GUESTBOOK_LIMIT} anı defteri mesajı eklenebilir. Sınırsız eklemek için Premium'a geç (çok yakında).`
+      );
+      return;
+    }
+
     setMessageSubmitting(true);
     setMessageError(null);
 
@@ -226,6 +237,13 @@ export default function DavetiyePage({
     e.target.value = "";
 
     if (!file || !invitation) return;
+
+    if (!invitation.is_premium && media.length >= FREE_MEDIA_LIMIT) {
+      setUploadError(
+        `Ücretsiz davetiyede en fazla ${FREE_MEDIA_LIMIT} fotoğraf/video eklenebilir. Sınırsız eklemek için Premium'a geç (çok yakında).`
+      );
+      return;
+    }
 
     const isImage = file.type.startsWith("image/");
     const isVideo = file.type.startsWith("video/");
@@ -347,6 +365,13 @@ export default function DavetiyePage({
 
   async function submitAudioMessage() {
     if (!invitation || !audioBlob || !guestName.trim()) return;
+
+    if (!invitation.is_premium && messages.length >= FREE_GUESTBOOK_LIMIT) {
+      setAudioError(
+        `Ücretsiz davetiyede en fazla ${FREE_GUESTBOOK_LIMIT} anı defteri mesajı eklenebilir. Sınırsız eklemek için Premium'a geç (çok yakında).`
+      );
+      return;
+    }
 
     setAudioSubmitting(true);
     setAudioError(null);
@@ -603,17 +628,27 @@ export default function DavetiyePage({
           olarak kalsın.
         </p>
 
-        <label htmlFor="mediaUpload" className="btn btn--ghost media-upload-btn">
-          {uploading ? "Yükleniyor..." : "Fotoğraf / video ekle"}
-        </label>
-        <input
-          id="mediaUpload"
-          type="file"
-          accept="image/*,video/*"
-          onChange={handleFileUpload}
-          disabled={uploading}
-          hidden
-        />
+        {invitation && !invitation.is_premium && media.length >= FREE_MEDIA_LIMIT ? (
+          <p className="premium-limit-note">
+            Ücretsiz davetiyede en fazla {FREE_MEDIA_LIMIT} fotoğraf/video
+            eklenebilir. Sınırsız eklemek için Premium&apos;a geç (çok
+            yakında).
+          </p>
+        ) : (
+          <>
+            <label htmlFor="mediaUpload" className="btn btn--ghost media-upload-btn">
+              {uploading ? "Yükleniyor..." : "Fotoğraf / video ekle"}
+            </label>
+            <input
+              id="mediaUpload"
+              type="file"
+              accept="image/*,video/*"
+              onChange={handleFileUpload}
+              disabled={uploading}
+              hidden
+            />
+          </>
+        )}
 
         {uploadError && <p className="auth-form__error">{uploadError}</p>}
 
@@ -679,77 +714,87 @@ export default function DavetiyePage({
           Bir mesaj bırak, çift yıllar sonra tekrar okusun.
         </p>
 
-        <form className="guestbook-form" onSubmit={submitMessage}>
-          <label htmlFor="guestNameMessage">Adın</label>
-          <input
-            id="guestNameMessage"
-            type="text"
-            value={guestName}
-            onChange={(e) => setGuestName(e.target.value)}
-            placeholder="Adın Soyadın"
-          />
-
-          <label htmlFor="messageText">Mesajın</label>
-          <textarea
-            id="messageText"
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Sizlere en mutlu günlerinizi diliyorum..."
-            rows={3}
-          />
-
-          {messageError && <p className="auth-form__error">{messageError}</p>}
-
-          <button
-            type="submit"
-            className="btn btn--primary"
-            disabled={messageSubmitting}
-          >
-            {messageSubmitting ? "Gönderiliyor..." : "Mesaj bırak"}
-          </button>
-        </form>
-
-        <div className="voice-note" id="sesli-mesaj">
-          <p className="voice-note__label">
-            ya da 15 saniyelik sesli bir not bırak
+        {invitation && !invitation.is_premium && messages.length >= FREE_GUESTBOOK_LIMIT ? (
+          <p className="premium-limit-note">
+            Ücretsiz davetiyede en fazla {FREE_GUESTBOOK_LIMIT} anı defteri
+            mesajı eklenebilir. Sınırsız eklemek için Premium&apos;a geç (çok
+            yakında).
           </p>
+        ) : (
+          <>
+            <form className="guestbook-form" onSubmit={submitMessage}>
+              <label htmlFor="guestNameMessage">Adın</label>
+              <input
+                id="guestNameMessage"
+                type="text"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                placeholder="Adın Soyadın"
+              />
 
-          {audioError && <p className="auth-form__error">{audioError}</p>}
+              <label htmlFor="messageText">Mesajın</label>
+              <textarea
+                id="messageText"
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                placeholder="Sizlere en mutlu günlerinizi diliyorum..."
+                rows={3}
+              />
 
-          {!audioBlob ? (
-            <button
-              type="button"
-              className={`btn ${isRecording ? "btn--primary" : "btn--ghost"}`}
-              onClick={isRecording ? stopRecording : startRecording}
-            >
-              {isRecording
-                ? `Durdur (${recordSecondsLeft} sn)`
-                : "Sesli mesaj kaydet"}
-            </button>
-          ) : (
-            <div className="voice-note__preview">
-              <audio src={URL.createObjectURL(audioBlob)} controls />
-              <div className="voice-note__preview-actions">
+              {messageError && <p className="auth-form__error">{messageError}</p>}
+
+              <button
+                type="submit"
+                className="btn btn--primary"
+                disabled={messageSubmitting}
+              >
+                {messageSubmitting ? "Gönderiliyor..." : "Mesaj bırak"}
+              </button>
+            </form>
+
+            <div className="voice-note" id="sesli-mesaj">
+              <p className="voice-note__label">
+                ya da 15 saniyelik sesli bir not bırak
+              </p>
+
+              {audioError && <p className="auth-form__error">{audioError}</p>}
+
+              {!audioBlob ? (
                 <button
                   type="button"
-                  className="btn btn--primary"
-                  disabled={audioSubmitting}
-                  onClick={submitAudioMessage}
+                  className={`btn ${isRecording ? "btn--primary" : "btn--ghost"}`}
+                  onClick={isRecording ? stopRecording : startRecording}
                 >
-                  {audioSubmitting ? "Gönderiliyor..." : "Gönder"}
+                  {isRecording
+                    ? `Durdur (${recordSecondsLeft} sn)`
+                    : "Sesli mesaj kaydet"}
                 </button>
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  disabled={audioSubmitting}
-                  onClick={discardRecording}
-                >
-                  Tekrar kaydet
-                </button>
-              </div>
+              ) : (
+                <div className="voice-note__preview">
+                  <audio src={URL.createObjectURL(audioBlob)} controls />
+                  <div className="voice-note__preview-actions">
+                    <button
+                      type="button"
+                      className="btn btn--primary"
+                      disabled={audioSubmitting}
+                      onClick={submitAudioMessage}
+                    >
+                      {audioSubmitting ? "Gönderiliyor..." : "Gönder"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--ghost"
+                      disabled={audioSubmitting}
+                      onClick={discardRecording}
+                    >
+                      Tekrar kaydet
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </>
+        )}
 
         {messages.length > 0 && (
           <ul className="guestbook-list">

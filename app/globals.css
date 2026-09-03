@@ -1062,6 +1062,40 @@ a {
   color: var(--brass);
 }
 
+/* ---------- premium locks ---------- */
+
+.premium-locked {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  padding: 18px;
+  margin-bottom: 20px;
+  background: var(--cream-deep);
+}
+
+.premium-locked span {
+  font-size: 18px;
+}
+
+.premium-locked p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.premium-limit-note {
+  border: 1px dashed var(--line);
+  border-radius: 4px;
+  padding: 16px 20px;
+  color: var(--brass);
+  font-size: 14px;
+  text-align: center;
+  margin: 0;
+}
+
 /* ---------- music mode toggle & youtube search ---------- */
 
 .music-mode-toggle {

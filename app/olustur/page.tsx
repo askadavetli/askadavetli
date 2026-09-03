@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { slugify, randomSuffix } from "../../lib/slugify";
-import { searchYoutubeMusic, type YoutubeSearchResult } from "../../lib/youtube";
 import TemplatePicker, { type TemplateId } from "../../components/TemplatePicker";
 
 const EVENT_TYPES = [
@@ -29,15 +28,6 @@ export default function OlusturPage() {
   const [venueName, setVenueName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
   const [template, setTemplate] = useState<TemplateId>("klasik");
-  const [musicFile, setMusicFile] = useState<File | null>(null);
-  const [musicMode, setMusicMode] = useState<"upload" | "youtube">("upload");
-  const [youtubeQuery, setYoutubeQuery] = useState("");
-  const [youtubeResults, setYoutubeResults] = useState<YoutubeSearchResult[]>([]);
-  const [youtubeSearching, setYoutubeSearching] = useState(false);
-  const [youtubeError, setYoutubeError] = useState<string | null>(null);
-  const [selectedYoutube, setSelectedYoutube] = useState<YoutubeSearchResult | null>(
-    null
-  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,23 +54,6 @@ export default function OlusturPage() {
     };
   }, [router]);
 
-  async function handleYoutubeSearch(e: React.FormEvent) {
-    e.preventDefault();
-    if (!youtubeQuery.trim()) return;
-
-    setYoutubeSearching(true);
-    setYoutubeError(null);
-
-    try {
-      const results = await searchYoutubeMusic(youtubeQuery.trim());
-      setYoutubeResults(results);
-    } catch (err) {
-      setYoutubeError(err instanceof Error ? err.message : "Arama başarısız oldu.");
-    } finally {
-      setYoutubeSearching(false);
-    }
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -98,54 +71,27 @@ export default function OlusturPage() {
     const baseSlug = slugify(`${partner1Name}-${partner2Name}`) || "davetiye";
     const slug = `${baseSlug}-${randomSuffix()}`;
 
-    const { data: inserted, error: insertError } = await supabase
-      .from("invitations")
-      .insert({
-        owner_id: session.user.id,
-        slug,
-        partner1_name: partner1Name,
-        partner2_name: partner2Name,
-        event_type: eventType,
-        event_date: eventDate || null,
-        event_time: eventTime || null,
-        venue_name: venueName || null,
-        venue_address: venueAddress || null,
-        template,
-        is_published: true,
-      })
-      .select("id")
-      .single();
+    const { error: insertError } = await supabase.from("invitations").insert({
+      owner_id: session.user.id,
+      slug,
+      partner1_name: partner1Name,
+      partner2_name: partner2Name,
+      event_type: eventType,
+      event_date: eventDate || null,
+      event_time: eventTime || null,
+      venue_name: venueName || null,
+      venue_address: venueAddress || null,
+      template,
+      is_published: true,
+    });
 
-    if (insertError || !inserted) {
-      setLoading(false);
-      setError(insertError?.message ?? "Davetiye oluşturulamadı.");
+    setLoading(false);
+
+    if (insertError) {
+      setError(insertError.message);
       return;
     }
 
-    if (musicMode === "youtube" && selectedYoutube) {
-      await supabase
-        .from("invitations")
-        .update({ music_youtube_id: selectedYoutube.videoId })
-        .eq("id", inserted.id);
-    } else if (musicMode === "upload" && musicFile) {
-      const ext = musicFile.name.split(".").pop() ?? "mp3";
-      const path = `${inserted.id}/music/${Date.now()}.${ext}`;
-
-      const { error: uploadErr } = await supabase.storage
-        .from("media")
-        .upload(path, musicFile);
-
-      if (!uploadErr) {
-        const musicUrl = supabase.storage.from("media").getPublicUrl(path)
-          .data.publicUrl;
-        await supabase
-          .from("invitations")
-          .update({ music_url: musicUrl })
-          .eq("id", inserted.id);
-      }
-    }
-
-    setLoading(false);
     router.push(`/davetiye/${slug}`);
   }
 
@@ -169,7 +115,7 @@ export default function OlusturPage() {
 
       <form className="create-form" onSubmit={handleSubmit}>
         <label>Şablon seç</label>
-        <TemplatePicker value={template} onChange={setTemplate} />
+        <TemplatePicker value={template} onChange={setTemplate} isPremium={false} />
 
         <div className="create-form__row">
           <div>
@@ -246,80 +192,15 @@ export default function OlusturPage() {
           placeholder="Misafirlerin haritada göreceği adres"
         />
 
-        <label htmlFor="musicFile">Müzik (opsiyonel)</label>
-        <div className="music-mode-toggle">
-          <button
-            type="button"
-            className={musicMode === "upload" ? "active" : ""}
-            onClick={() => setMusicMode("upload")}
-          >
-            Kendi dosyanı yükle
-          </button>
-          <button
-            type="button"
-            className={musicMode === "youtube" ? "active" : ""}
-            onClick={() => setMusicMode("youtube")}
-          >
-            YouTube&apos;dan seç
-          </button>
+        <label>Müzik</label>
+        <div className="premium-locked">
+          <span>🔒</span>
+          <p>
+            Müzik ekleme premium davetiyelerde kullanılabilir. Davetiyeni
+            oluşturduktan sonra Premium&apos;a geçip müzik ekleyebilirsin (çok
+            yakında).
+          </p>
         </div>
-
-        {musicMode === "upload" ? (
-          <input
-            id="musicFile"
-            type="file"
-            accept="audio/*"
-            onChange={(e) => setMusicFile(e.target.files?.[0] ?? null)}
-          />
-        ) : (
-          <div className="youtube-search">
-            <div className="youtube-search__bar">
-              <input
-                type="text"
-                value={youtubeQuery}
-                onChange={(e) => setYoutubeQuery(e.target.value)}
-                placeholder="Şarkı adı veya sanatçı ara"
-              />
-              <button
-                type="button"
-                className="btn btn--ghost"
-                onClick={handleYoutubeSearch}
-                disabled={youtubeSearching}
-              >
-                {youtubeSearching ? "Aranıyor..." : "Ara"}
-              </button>
-            </div>
-
-            {youtubeError && <p className="auth-form__error">{youtubeError}</p>}
-
-            {selectedYoutube && (
-              <p className="youtube-search__selected">
-                Seçildi: <strong>{selectedYoutube.title}</strong>
-              </p>
-            )}
-
-            {youtubeResults.length > 0 && (
-              <ul className="youtube-results">
-                {youtubeResults.map((r) => (
-                  <li
-                    key={r.videoId}
-                    className={
-                      selectedYoutube?.videoId === r.videoId ? "selected" : ""
-                    }
-                    onClick={() => setSelectedYoutube(r)}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={r.thumbnailUrl} alt="" />
-                    <div>
-                      <p>{r.title}</p>
-                      <span>{r.channelTitle}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
 
         {error && <p className="auth-form__error">{error}</p>}
 

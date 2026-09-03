@@ -37,6 +37,7 @@ export default function DuzenlePage({
   const [venueName, setVenueName] = useState("");
   const [venueAddress, setVenueAddress] = useState("");
   const [isPublished, setIsPublished] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
   const [template, setTemplate] = useState<TemplateId>("klasik");
   const [musicUrl, setMusicUrl] = useState<string | null>(null);
   const [musicFile, setMusicFile] = useState<File | null>(null);
@@ -70,7 +71,7 @@ export default function DuzenlePage({
       const { data } = await supabase
         .from("invitations")
         .select(
-          "id, owner_id, slug, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, is_published, music_url, music_youtube_id, template"
+          "id, owner_id, slug, partner1_name, partner2_name, event_type, event_date, event_time, venue_name, venue_address, is_published, is_premium, music_url, music_youtube_id, template"
         )
         .eq("id", id)
         .maybeSingle();
@@ -91,6 +92,7 @@ export default function DuzenlePage({
       setVenueName(data.venue_name ?? "");
       setVenueAddress(data.venue_address ?? "");
       setIsPublished(data.is_published);
+      setIsPremium(data.is_premium);
       setTemplate((data.template as TemplateId) || "klasik");
       setMusicUrl(data.music_url);
       setMusicYoutubeId(data.music_youtube_id);
@@ -209,7 +211,7 @@ export default function DuzenlePage({
 
       <form className="create-form" onSubmit={handleSubmit}>
         <label>Şablon</label>
-        <TemplatePicker value={template} onChange={setTemplate} />
+        <TemplatePicker value={template} onChange={setTemplate} isPremium={isPremium} />
 
         <div className="create-form__row">
           <div>
@@ -297,131 +299,145 @@ export default function DuzenlePage({
 
         <label>Müzik (opsiyonel)</label>
 
-        {musicYoutubeId && !removeMusic && musicMode === "youtube" && !selectedYoutube && (
-          <div className="music-current">
-            <span>
-              Şu an bağlı: YouTube video (
-              <a
-                href={`https://www.youtube.com/watch?v=${musicYoutubeId}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                izle
-              </a>
-              )
-            </span>
-            <button
-              type="button"
-              className="text-link"
-              onClick={() => setRemoveMusic(true)}
-            >
-              Müziği kaldır
-            </button>
+        {!isPremium && (
+          <div className="premium-locked">
+            <span>🔒</span>
+            <p>
+              Müzik ekleme premium davetiyelerde kullanılabilir. Sınırsız
+              medya ve tüm şablonlarla birlikte gelir (çok yakında).
+            </p>
           </div>
         )}
-        {musicUrl && !removeMusic && musicMode === "upload" && !musicFile && (
-          <div className="music-current">
-            <audio src={musicUrl} controls />
-            <button
-              type="button"
-              className="text-link"
-              onClick={() => setRemoveMusic(true)}
-            >
-              Müziği kaldır
-            </button>
-          </div>
-        )}
-        {removeMusic && (
-          <p className="music-current__removed">
-            Kaydettiğinde müzik kaldırılacak.{" "}
-            <button
-              type="button"
-              className="text-link"
-              onClick={() => setRemoveMusic(false)}
-            >
-              Vazgeç
-            </button>
-          </p>
-        )}
 
-        <div className="music-mode-toggle">
-          <button
-            type="button"
-            className={musicMode === "upload" ? "active" : ""}
-            onClick={() => {
-              setMusicMode("upload");
-              setRemoveMusic(false);
-            }}
-          >
-            Kendi dosyanı yükle
-          </button>
-          <button
-            type="button"
-            className={musicMode === "youtube" ? "active" : ""}
-            onClick={() => {
-              setMusicMode("youtube");
-              setRemoveMusic(false);
-            }}
-          >
-            YouTube&apos;dan seç
-          </button>
-        </div>
-
-        {musicMode === "upload" ? (
-          <input
-            id="musicFile"
-            type="file"
-            accept="audio/*"
-            onChange={(e) => setMusicFile(e.target.files?.[0] ?? null)}
-          />
-        ) : (
-          <div className="youtube-search">
-            <div className="youtube-search__bar">
-              <input
-                type="text"
-                value={youtubeQuery}
-                onChange={(e) => setYoutubeQuery(e.target.value)}
-                placeholder="Şarkı adı veya sanatçı ara"
-              />
-              <button
-                type="button"
-                className="btn btn--ghost"
-                onClick={handleYoutubeSearch}
-                disabled={youtubeSearching}
-              >
-                {youtubeSearching ? "Aranıyor..." : "Ara"}
-              </button>
-            </div>
-
-            {youtubeError && <p className="auth-form__error">{youtubeError}</p>}
-
-            {selectedYoutube && (
-              <p className="youtube-search__selected">
-                Seçildi: <strong>{selectedYoutube.title}</strong>
+        {isPremium && (
+          <>
+            {musicYoutubeId && !removeMusic && musicMode === "youtube" && !selectedYoutube && (
+              <div className="music-current">
+                <span>
+                  Şu an bağlı: YouTube video (
+                  <a
+                    href={`https://www.youtube.com/watch?v=${musicYoutubeId}`}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    izle
+                  </a>
+                  )
+                </span>
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => setRemoveMusic(true)}
+                >
+                  Müziği kaldır
+                </button>
+              </div>
+            )}
+            {musicUrl && !removeMusic && musicMode === "upload" && !musicFile && (
+              <div className="music-current">
+                <audio src={musicUrl} controls />
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => setRemoveMusic(true)}
+                >
+                  Müziği kaldır
+                </button>
+              </div>
+            )}
+            {removeMusic && (
+              <p className="music-current__removed">
+                Kaydettiğinde müzik kaldırılacak.{" "}
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => setRemoveMusic(false)}
+                >
+                  Vazgeç
+                </button>
               </p>
             )}
 
-            {youtubeResults.length > 0 && (
-              <ul className="youtube-results">
-                {youtubeResults.map((r) => (
-                  <li
-                    key={r.videoId}
-                    className={
-                      selectedYoutube?.videoId === r.videoId ? "selected" : ""
-                    }
-                    onClick={() => setSelectedYoutube(r)}
+            <div className="music-mode-toggle">
+              <button
+                type="button"
+                className={musicMode === "upload" ? "active" : ""}
+                onClick={() => {
+                  setMusicMode("upload");
+                  setRemoveMusic(false);
+                }}
+              >
+                Kendi dosyanı yükle
+              </button>
+              <button
+                type="button"
+                className={musicMode === "youtube" ? "active" : ""}
+                onClick={() => {
+                  setMusicMode("youtube");
+                  setRemoveMusic(false);
+                }}
+              >
+                YouTube&apos;dan seç
+              </button>
+            </div>
+
+            {musicMode === "upload" ? (
+              <input
+                id="musicFile"
+                type="file"
+                accept="audio/*"
+                onChange={(e) => setMusicFile(e.target.files?.[0] ?? null)}
+              />
+            ) : (
+              <div className="youtube-search">
+                <div className="youtube-search__bar">
+                  <input
+                    type="text"
+                    value={youtubeQuery}
+                    onChange={(e) => setYoutubeQuery(e.target.value)}
+                    placeholder="Şarkı adı veya sanatçı ara"
+                  />
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={handleYoutubeSearch}
+                    disabled={youtubeSearching}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={r.thumbnailUrl} alt="" />
-                    <div>
-                      <p>{r.title}</p>
-                      <span>{r.channelTitle}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+                    {youtubeSearching ? "Aranıyor..." : "Ara"}
+                  </button>
+                </div>
+
+                {youtubeError && <p className="auth-form__error">{youtubeError}</p>}
+
+                {selectedYoutube && (
+                  <p className="youtube-search__selected">
+                    Seçildi: <strong>{selectedYoutube.title}</strong>
+                  </p>
+                )}
+
+                {youtubeResults.length > 0 && (
+                  <ul className="youtube-results">
+                    {youtubeResults.map((r) => (
+                      <li
+                        key={r.videoId}
+                        className={
+                          selectedYoutube?.videoId === r.videoId ? "selected" : ""
+                        }
+                        onClick={() => setSelectedYoutube(r)}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={r.thumbnailUrl} alt="" />
+                        <div>
+                          <p>{r.title}</p>
+                          <span>{r.channelTitle}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
-          </div>
+          </>
         )}
 
         {error && <p className="auth-form__error">{error}</p>}

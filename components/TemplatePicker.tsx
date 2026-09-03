@@ -13,16 +13,18 @@ const TEMPLATES: { id: TemplateId; name: string; premium: boolean }[] = [
 export default function TemplatePicker({
   value,
   onChange,
+  isPremium = false,
 }: {
   value: string;
   onChange: (id: TemplateId) => void;
+  isPremium?: boolean;
 }) {
   const [premiumNotice, setPremiumNotice] = useState<string | null>(null);
 
   function handleClick(t: (typeof TEMPLATES)[number]) {
-    if (t.premium) {
+    if (t.premium && !isPremium) {
       setPremiumNotice(
-        `${t.name} çok yakında premium üyelikle kullanılabilecek. Şimdilik Klasik ile devam edebilirsin.`
+        `${t.name} bir premium şablon. Sınırsız medya, sınırsız anı defteri ve tüm şablonlara erişmek için Premium'a geç (çok yakında).`
       );
       return;
     }
@@ -38,13 +40,15 @@ export default function TemplatePicker({
             type="button"
             key={t.id}
             className={`template-card ${value === t.id ? "template-card--selected" : ""} ${
-              t.premium ? "template-card--locked" : ""
+              t.premium && !isPremium ? "template-card--locked" : ""
             }`}
             onClick={() => handleClick(t)}
           >
             <span className={`template-swatch template-swatch--${t.id}`}>
               <span className="template-swatch__sample">A &amp; B</span>
-              {t.premium && <span className="template-swatch__lock">🔒</span>}
+              {t.premium && !isPremium && (
+                <span className="template-swatch__lock">🔒</span>
+              )}
             </span>
             <span className="template-card__name">{t.name}</span>
             <span
