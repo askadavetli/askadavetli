@@ -666,3 +666,188 @@ a {
   font-size: 14px;
   color: var(--ink-soft);
 }
+
+/* ---------- create invitation page ---------- */
+
+.create-page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 60px 6vw 100px;
+}
+
+.create-page__intro h1 {
+  font-size: 34px;
+  margin-bottom: 10px;
+}
+
+.create-page__intro p {
+  color: var(--ink-soft);
+  margin: 0 0 40px;
+}
+
+.create-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.create-form label {
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: var(--ink-soft);
+}
+
+.create-form input,
+.create-form select {
+  border: 1px solid var(--line);
+  background: white;
+  border-radius: 4px;
+  padding: 12px 14px;
+  font-size: 15px;
+  margin-bottom: 20px;
+  font-family: var(--font-body);
+  color: var(--ink);
+  width: 100%;
+}
+
+.create-form input:focus,
+.create-form select:focus {
+  outline: 2px solid var(--brass);
+  outline-offset: 1px;
+}
+
+.create-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.create-form .btn {
+  border: none;
+  cursor: pointer;
+  margin-top: 4px;
+  align-self: flex-start;
+}
+
+.create-form .btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---------- guest invitation page ---------- */
+
+.invitation-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 70px 6vw 100px;
+}
+
+.invitation-page--empty {
+  text-align: center;
+  padding-top: 120px;
+}
+
+.invitation-page--empty p {
+  color: var(--ink-soft);
+}
+
+.invitation-hero {
+  text-align: center;
+  padding-bottom: 50px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 50px;
+}
+
+.invitation-hero__label {
+  display: inline-block;
+  font-size: 14px;
+  color: var(--brass);
+  margin-bottom: 18px;
+}
+
+.invitation-hero h1 {
+  font-size: clamp(34px, 7vw, 54px);
+  line-height: 1.15;
+}
+
+.invitation-hero__details {
+  margin-top: 26px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  color: var(--ink-soft);
+  font-size: 16px;
+}
+
+.invitation-map {
+  margin-bottom: 50px;
+  text-align: center;
+}
+
+.invitation-map iframe {
+  width: 100%;
+  height: 280px;
+  border: 0;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.invitation-rsvp {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 36px;
+  text-align: center;
+}
+
+.invitation-rsvp h2 {
+  font-size: 24px;
+  margin-bottom: 24px;
+}
+
+.invitation-rsvp label {
+  display: block;
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.invitation-rsvp input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 12px 14px;
+  font-size: 15px;
+  margin-bottom: 20px;
+  font-family: var(--font-body);
+  color: var(--ink);
+}
+
+.invitation-rsvp__actions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.invitation-rsvp__actions .btn {
+  border: none;
+  cursor: pointer;
+}
+
+.invitation-rsvp__actions .btn--ghost {
+  border: 1px solid var(--ink-soft);
+  background: transparent;
+}
+
+.invitation-rsvp__actions .btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.invitation-rsvp__thanks {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--ink);
+  margin: 0;
+}
