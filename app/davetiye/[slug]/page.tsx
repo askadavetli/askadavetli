@@ -31,6 +31,7 @@ type MediaItem = {
   id: string;
   storage_path: string;
   media_type: "image" | "video";
+  uploaded_by_name: string | null;
   publicUrl: string;
 };
 
@@ -80,6 +81,7 @@ export default function DavetiyePage({
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [mediaSearch, setMediaSearch] = useState("");
   const [isOwner, setIsOwner] = useState(false);
 
   const RECORD_SECONDS = 15;
@@ -136,7 +138,7 @@ export default function DavetiyePage({
 
         const { data: mediaRows } = await supabase
           .from("media")
-          .select("id, storage_path, media_type")
+          .select("id, storage_path, media_type, uploaded_by_name")
           .eq("invitation_id", data.id)
           .order("created_at", { ascending: true });
 
@@ -265,7 +267,7 @@ export default function DavetiyePage({
         storage_path: path,
         media_type: isVideo ? "video" : "image",
       })
-      .select("id, storage_path, media_type")
+      .select("id, storage_path, media_type, uploaded_by_name")
       .single();
 
     setUploading(false);
@@ -616,27 +618,58 @@ export default function DavetiyePage({
         {uploadError && <p className="auth-form__error">{uploadError}</p>}
 
         {media.length > 0 && (
-          <div className="media-grid">
-            {media.map((item) => (
-              <div key={item.id} className="media-grid__item">
-                {item.media_type === "video" ? (
-                  <video src={item.publicUrl} controls />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.publicUrl} alt="" />
-                )}
-                {isOwner && (
-                  <button
-                    type="button"
-                    className="media-grid__delete"
-                    onClick={() => deleteMedia(item)}
-                  >
-                    Sil
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
+          <>
+            <input
+              type="text"
+              className="media-search"
+              placeholder="Yükleyen kişiye göre ara..."
+              value={mediaSearch}
+              onChange={(e) => setMediaSearch(e.target.value)}
+            />
+
+            {(() => {
+              const filtered = mediaSearch.trim()
+                ? media.filter((item) =>
+                    (item.uploaded_by_name ?? "")
+                      .toLowerCase()
+                      .includes(mediaSearch.trim().toLowerCase())
+                  )
+                : media;
+
+              if (filtered.length === 0) {
+                return <p className="media-search__empty">Eşleşen kayıt yok.</p>;
+              }
+
+              return (
+                <div className="media-grid">
+                  {filtered.map((item) => (
+                    <div key={item.id} className="media-grid__item">
+                      {item.media_type === "video" ? (
+                        <video src={item.publicUrl} controls />
+                      ) : (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.publicUrl} alt="" />
+                      )}
+                      {item.uploaded_by_name && (
+                        <span className="media-grid__uploader">
+                          {item.uploaded_by_name}
+                        </span>
+                      )}
+                      {isOwner && (
+                        <button
+                          type="button"
+                          className="media-grid__delete"
+                          onClick={() => deleteMedia(item)}
+                        >
+                          Sil
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </>
         )}
       </section>
 

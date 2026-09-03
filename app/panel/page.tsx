@@ -14,6 +14,10 @@ type MediaPreview = {
   publicUrl: string;
 };
 
+type MediaFull = MediaPreview & {
+  uploaded_by_name: string | null;
+};
+
 type InvitationRow = {
   id: string;
   slug: string;
@@ -32,6 +36,12 @@ export default function PanelPage() {
   const [invitations, setInvitations] = useState<InvitationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
+  const [mediaSearchOpen, setMediaSearchOpen] = useState<Record<string, boolean>>({});
+  const [mediaSearchQuery, setMediaSearchQuery] = useState<Record<string, string>>({});
+  const [fullMedia, setFullMedia] = useState<Record<string, MediaFull[]>>({});
+  const [fullMediaLoading, setFullMediaLoading] = useState<Record<string, boolean>>(
+    {}
+  );
 
   useEffect(() => {
     let active = true;
@@ -133,6 +143,38 @@ export default function PanelPage() {
     setQrCodes((prev) => ({ ...prev, [invId]: dataUrl }));
   }
 
+  async function toggleMediaSearch(invId: string) {
+    const isOpen = mediaSearchOpen[invId];
+
+    if (isOpen) {
+      setMediaSearchOpen((prev) => ({ ...prev, [invId]: false }));
+      return;
+    }
+
+    setMediaSearchOpen((prev) => ({ ...prev, [invId]: true }));
+
+    if (!fullMedia[invId]) {
+      setFullMediaLoading((prev) => ({ ...prev, [invId]: true }));
+
+      const { data } = await supabase
+        .from("media")
+        .select("id, storage_path, media_type, uploaded_by_name")
+        .eq("invitation_id", invId)
+        .order("created_at", { ascending: false });
+
+      const items: MediaFull[] = (data ?? []).map((row) => ({
+        id: row.id,
+        media_type: row.media_type,
+        uploaded_by_name: row.uploaded_by_name,
+        publicUrl: supabase.storage.from("media").getPublicUrl(row.storage_path)
+          .data.publicUrl,
+      }));
+
+      setFullMedia((prev) => ({ ...prev, [invId]: items }));
+      setFullMediaLoading((prev) => ({ ...prev, [invId]: false }));
+    }
+  }
+
   if (loading) {
     return (
       <main className="panel-page">
@@ -186,6 +228,13 @@ export default function PanelPage() {
                   <a href={`/davetliler/${inv.id}`} className="text-link">
                     Davetli listesi
                   </a>
+                  <button
+                    type="button"
+                    className="text-link panel-qr-toggle"
+                    onClick={() => toggleMediaSearch(inv.id)}
+                  >
+                    {mediaSearchOpen[inv.id] ? "Aramayı kapat" : "Anılarda ara"}
+                  </button>
                   <a href={`/duzenle/${inv.id}`} className="text-link">
                     Düzenle
                   </a>
@@ -210,6 +259,58 @@ export default function PanelPage() {
                   >
                     QR kodu indir
                   </a>
+                </div>
+              )}
+
+              {mediaSearchOpen[inv.id] && (
+                <div className="panel-media-search">
+                  <input
+                    type="text"
+                    placeholder="Yükleyen kişiye göre ara..."
+                    value={mediaSearchQuery[inv.id] ?? ""}
+                    onChange={(e) =>
+                      setMediaSearchQuery((prev) => ({
+                        ...prev,
+                        [inv.id]: e.target.value,
+                      }))
+                    }
+                  />
+
+                  {fullMediaLoading[inv.id] ? (
+                    <p>Yükleniyor...</p>
+                  ) : (
+                    (() => {
+                      const query = (mediaSearchQuery[inv.id] ?? "").trim().toLowerCase();
+                      const items = fullMedia[inv.id] ?? [];
+                      const filtered = query
+                        ? items.filter((item) =>
+                            (item.uploaded_by_name ?? "").toLowerCase().includes(query)
+                          )
+                        : items;
+
+                      if (filtered.length === 0) {
+                        return <p>Eşleşen kayıt yok.</p>;
+                      }
+
+                      return (
+                        <div className="panel-media-search__grid">
+                          {filtered.map((item) => (
+                            <div key={item.id} className="panel-media-search__item">
+                              {item.media_type === "video" ? (
+                                <video src={item.publicUrl} muted />
+                              ) : (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={item.publicUrl} alt="" />
+                              )}
+                              {item.uploaded_by_name && (
+                                <span>{item.uploaded_by_name}</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()
+                  )}
                 </div>
               )}
 
