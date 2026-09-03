@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { use, useEffect, useRef, useState } from "react";
 import { supabase } from "../../../lib/supabase";
+import Countdown from "../../../components/Countdown";
 
 type Invitation = {
   id: string;
@@ -496,6 +497,13 @@ export default function DavetiyePage({
           {invitation.event_time && <span>{invitation.event_time.slice(0, 5)}</span>}
           {invitation.venue_name && <span>{invitation.venue_name}</span>}
         </div>
+
+        {invitation.event_date && (
+          <Countdown
+            eventDate={invitation.event_date}
+            eventTime={invitation.event_time}
+          />
+        )}
 
         {invitation.music_youtube_id ? (
           <div className="music-player">
