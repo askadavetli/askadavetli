@@ -393,6 +393,28 @@ export default function DavetiyePage({
     }
   }
 
+  async function deleteMedia(item: MediaItem) {
+    const confirmed = window.confirm(
+      "Bu fotoğraf/videoyu kalıcı olarak silmek istediğine emin misin?"
+    );
+    if (!confirmed) return;
+
+    const { error: storageErr } = await supabase.storage
+      .from("media")
+      .remove([item.storage_path]);
+
+    if (storageErr) {
+      window.alert("Silinemedi: " + storageErr.message);
+      return;
+    }
+
+    const { error: dbErr } = await supabase.from("media").delete().eq("id", item.id);
+
+    if (!dbErr) {
+      setMedia((prev) => prev.filter((m) => m.id !== item.id));
+    }
+  }
+
   if (loading) {
     return (
       <main className="invitation-page">
@@ -528,14 +550,25 @@ export default function DavetiyePage({
 
         {media.length > 0 && (
           <div className="media-grid">
-            {media.map((item) =>
-              item.media_type === "video" ? (
-                <video key={item.id} src={item.publicUrl} controls />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img key={item.id} src={item.publicUrl} alt="" />
-              )
-            )}
+            {media.map((item) => (
+              <div key={item.id} className="media-grid__item">
+                {item.media_type === "video" ? (
+                  <video src={item.publicUrl} controls />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.publicUrl} alt="" />
+                )}
+                {isOwner && (
+                  <button
+                    type="button"
+                    className="media-grid__delete"
+                    onClick={() => deleteMedia(item)}
+                  >
+                    Sil
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </section>

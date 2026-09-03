@@ -1050,6 +1050,28 @@ a {
   object-fit: cover;
   border-radius: 4px;
   background: var(--cream-deep);
+  display: block;
+}
+
+.media-grid__item {
+  position: relative;
+}
+
+.media-grid__delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: none;
+  background: rgba(38, 32, 27, 0.75);
+  color: white;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.media-grid__delete:hover {
+  background: #a33b2f;
 }
 
 @media (min-width: 640px) {
