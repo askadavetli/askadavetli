@@ -183,6 +183,9 @@ export default function PanelPage() {
                   >
                     {qrCodes[inv.id] ? "QR kodu gizle" : "QR kodu göster"}
                   </button>
+                  <a href={`/davetliler/${inv.id}`} className="text-link">
+                    Davetli listesi
+                  </a>
                   <a href={`/duzenle/${inv.id}`} className="text-link">
                     Düzenle
                   </a>

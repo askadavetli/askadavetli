@@ -738,6 +738,78 @@ a {
   text-decoration: none;
 }
 
+/* ---------- guest list ---------- */
+
+.guestlist-page {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 60px 6vw 100px;
+}
+
+.guestlist-page__header h1 {
+  font-size: 30px;
+  margin-bottom: 6px;
+}
+
+.guestlist-page__header p {
+  color: var(--ink-soft);
+  margin: 0 0 40px;
+}
+
+.guestlist-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.guestlist-summary > div {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.guestlist-summary__number {
+  font-family: var(--font-display);
+  font-size: 32px;
+}
+
+.guestlist-summary > div span:last-child {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.guestlist-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.guestlist-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.guestlist-list__name {
+  font-weight: 600;
+}
+
+.guestlist-list__status {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.guestlist-list__status--attending {
+  color: var(--brass);
+}
+
 /* ---------- create invitation page ---------- */
 
 .create-page {
