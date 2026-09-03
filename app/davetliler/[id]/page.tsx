@@ -11,6 +11,7 @@ type Rsvp = {
   guest_name: string;
   status: "attending" | "not_attending";
   guest_count: number;
+  child_count: number;
   created_at: string;
 };
 
@@ -56,7 +57,7 @@ export default function DavetlilerPage({
 
       const { data: rsvpRows } = await supabase
         .from("rsvps")
-        .select("id, guest_name, status, guest_count, created_at")
+        .select("id, guest_name, status, guest_count, child_count, created_at")
         .eq("invitation_id", id)
         .order("created_at", { ascending: false });
 
@@ -92,6 +93,7 @@ export default function DavetlilerPage({
   const attending = rsvps.filter((r) => r.status === "attending");
   const notAttending = rsvps.filter((r) => r.status === "not_attending");
   const totalGuests = attending.reduce((sum, r) => sum + (r.guest_count ?? 0), 0);
+  const totalChildren = attending.reduce((sum, r) => sum + (r.child_count ?? 0), 0);
 
   return (
     <main className="guestlist-page">
@@ -104,6 +106,10 @@ export default function DavetlilerPage({
         <div>
           <span className="guestlist-summary__number">{totalGuests}</span>
           <span>kişi geliyor</span>
+        </div>
+        <div>
+          <span className="guestlist-summary__number">{totalChildren}</span>
+          <span>çocuk</span>
         </div>
         <div>
           <span className="guestlist-summary__number">{attending.length}</span>
@@ -128,7 +134,9 @@ export default function DavetlilerPage({
                 className={`guestlist-list__status guestlist-list__status--${r.status}`}
               >
                 {r.status === "attending"
-                  ? `Katılıyor · ${r.guest_count} kişi`
+                  ? `Katılıyor · ${r.guest_count} kişi${
+                      r.child_count > 0 ? ` (${r.child_count} çocuk)` : ""
+                    }`
                   : "Katılamıyor"}
               </span>
             </li>

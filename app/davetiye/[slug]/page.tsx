@@ -71,6 +71,7 @@ export default function DavetiyePage({
 
   const [guestName, setGuestName] = useState("");
   const [guestCount, setGuestCount] = useState(1);
+  const [childCount, setChildCount] = useState(0);
   const [rsvpStatus, setRsvpStatus] = useState<"attending" | "not_attending" | null>(
     null
   );
@@ -180,6 +181,7 @@ export default function DavetiyePage({
       guest_name: guestName.trim(),
       status,
       guest_count: status === "attending" ? guestCount : 0,
+      child_count: status === "attending" ? Math.min(childCount, guestCount) : 0,
     });
 
     setRsvpSubmitting(false);
@@ -595,14 +597,28 @@ export default function DavetiyePage({
               placeholder="Adın Soyadın"
             />
 
-            <label htmlFor="guestCount">Kaç kişi geleceksiniz?</label>
+            <label htmlFor="guestCount">Toplam kaç kişi geleceksiniz? (sen dahil)</label>
             <input
               id="guestCount"
               type="number"
               min={1}
               max={10}
               value={guestCount}
-              onChange={(e) => setGuestCount(Number(e.target.value))}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                setGuestCount(val);
+                if (childCount > val) setChildCount(val);
+              }}
+            />
+
+            <label htmlFor="childCount">Bunlardan kaçı çocuk?</label>
+            <input
+              id="childCount"
+              type="number"
+              min={0}
+              max={guestCount}
+              value={childCount}
+              onChange={(e) => setChildCount(Number(e.target.value))}
             />
 
             {rsvpError && <p className="auth-form__error">{rsvpError}</p>}
